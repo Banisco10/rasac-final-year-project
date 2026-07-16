@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RASAC Gateway | Role Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffddb8",
+                        "secondary-fixed": "#55fcda",
+                        "outline": "#8f9097",
+                        "on-tertiary-container": "#b87500",
+                        "inverse-surface": "#d3e4fe",
+                        "on-tertiary": "#472a00",
+                        "on-primary-container": "#78849a",
+                        "on-error": "#690005",
+                        "secondary": "#45f0cf",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#031427",
+                        "secondary-fixed-dim": "#27dfbe",
+                        "primary-container": "#0f1b2d",
+                        "on-surface-variant": "#c5c6cd",
+                        "surface-container": "#102034",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "secondary-container": "#00d3b3",
+                        "surface-dim": "#031427",
+                        "surface-tint": "#bbc7df",
+                        "on-secondary-fixed": "#00201a",
+                        "inverse-primary": "#535f74",
+                        "on-secondary": "#00382e",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-primary": "#253144",
+                        "on-secondary-fixed-variant": "#005143",
+                        "inverse-on-surface": "#213145",
+                        "error": "#ffb4ab",
+                        "primary-fixed-dim": "#bbc7df",
+                        "primary-fixed": "#d7e3fc",
+                        "surface-bright": "#2a3a4f",
+                        "surface-variant": "#26364a",
+                        "tertiary": "#ffb95f",
+                        "surface-container-highest": "#26364a",
+                        "outline-variant": "#44474c",
+                        "on-secondary-container": "#005547",
+                        "on-primary-fixed-variant": "#3c475b",
+                        "surface-container-low": "#0b1c30",
+                        "primary": "#bbc7df",
+                        "on-surface": "#d3e4fe",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "background": "#031427",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#000f21",
+                        "on-primary-fixed": "#101c2e",
+                        "surface-container-high": "#1b2b3f",
+                        "tertiary-container": "#291700",
+                        "on-background": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "density-comfortable": "16px",
+                        "gutter": "16px",
+                        "container-max": "1440px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px",
+                        "density-compact": "8px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["JetBrains Mono"],
+                        "code-md": ["JetBrains Mono"],
+                        "body-sm": ["DM Sans"],
+                        "headline-lg": ["DM Sans"],
+                        "body-md": ["DM Sans"],
+                        "headline-md": ["DM Sans"],
+                        "headline-sm": ["DM Sans"],
+                        "body-lg": ["DM Sans"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "450"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #031427;
+            color: #d3e4fe;
+            -webkit-font-smoothing: antialiased;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0b1c30;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2a3a4f;
+        }
+        .permission-row:hover {
+            background-color: rgba(69, 240, 207, 0.04);
+        }
+        .active-glow {
+            box-shadow: 0 0 10px rgba(69, 240, 207, 0.2);
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-hidden">
+<!-- Side Navigation Shell -->
+<aside class="w-[240px] h-full fixed left-0 top-0 border-r border-outline-variant bg-surface-container-low flex flex-col z-50">
+<div class="p-gutter flex flex-col gap-1">
+<h1 class="font-headline-sm text-headline-sm font-bold text-secondary tracking-tight">RASAC Engine</h1>
+<span class="font-code-md text-code-md text-on-surface-variant">v2.4.0-Stable</span>
+</div>
+<nav class="mt-8 flex-1">
+<ul class="flex flex-col gap-1">
+<li>
+<a class="flex items-center gap-3 px-gutter py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-gutter py-3 text-secondary bg-primary-container border-r-2 border-secondary" href="#">
+<span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+<span class="font-label-caps text-label-caps">Access Control</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-gutter py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">account_tree</span>
+<span class="font-label-caps text-label-caps">Relationship Maps</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-gutter py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">history_edu</span>
+<span class="font-label-caps text-label-caps">Audit Logs</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-gutter py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</li>
+</ul>
+</nav>
+<div class="p-gutter border-t border-outline-variant">
+<button class="w-full py-2 px-4 bg-secondary text-surface font-label-caps text-label-caps rounded active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]">add_moderator</span>
+                Request Access
+            </button>
+<div class="mt-4 flex flex-col gap-2">
+<a class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface text-[12px]" href="#">
+<span class="material-symbols-outlined text-[16px]">menu_book</span> Documentation
+                </a>
+<a class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface text-[12px]" href="#">
+<span class="material-symbols-outlined text-[16px]">support_agent</span> Support
+                </a>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Shell -->
+<header class="h-16 w-full fixed top-0 z-40 flex items-center justify-between px-gutter ml-[240px] w-[calc(100%-240px)] border-b border-outline-variant bg-surface-container-high">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-secondary text-body-sm font-body-sm" placeholder="Search permissions, roles, or users..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-secondary-fixed transition-all cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-secondary-fixed transition-all cursor-pointer">security</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-secondary-fixed transition-all cursor-pointer">help</span>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-on-surface">Admin_Root</p>
+<p class="text-[10px] text-secondary font-code-md">0x882A...FD1E</p>
+</div>
+<div class="w-10 h-10 rounded-full border border-secondary p-[2px]">
+<img alt="Administrator Avatar" class="w-full h-full rounded-full object-cover" data-alt="A professional headshot of a cybersecurity administrator in a dimly lit server room. The lighting is dominated by tech-inspired cyan and deep blue hues. The person has a serious, focused expression, reflecting a high-stakes digital security environment. The overall aesthetic is industrial, modern, and high-contrast." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiZ8wVskpcHq7vtRqjcKlNEFrFLGfLLaMshs3sGJrHiYv5TLukttf191oRPfKZeAHg7KUaQEvNsCFB72t4R0owPUSipg0DRII2GkjIH3Tq9ahJBAZ2sF0q-I0rmSJd_QNgoPCZ-Guw-fRSCPUUa-zGoR7_-OgJcOzo-7tU2ounbSDopBUdh78wxMpg-qP67FVN0SBnag-yo9MWmdmfx8QJSIWaJEEFd_v2kCJoDni59TNIU41NqARg9CJPhleGNjPO4F16k7aOhMG8"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[240px] mt-16 p-8 h-[calc(100vh-64px)] overflow-y-auto custom-scrollbar bg-surface-container-low">
+<!-- Header Section -->
+<div class="flex items-center justify-between mb-8">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-on-surface-variant mb-2">
+<span class="font-label-caps text-label-caps">Access Control</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="font-label-caps text-label-caps text-secondary">Role Management</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Role Management: <span class="text-secondary">Administrator</span></h2>
+<p class="text-on-surface-variant font-body-sm max-w-2xl">Manage foundational permissions for the system-wide administrator role. These rules apply globally across the RASAC framework and define the ceiling of operational capability.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2 border border-outline-variant rounded-lg font-label-caps text-label-caps text-on-surface hover:bg-surface-variant transition-colors">Discard Changes</button>
+<button class="px-6 py-2 bg-secondary text-surface rounded-lg font-label-caps text-label-caps font-bold active-glow hover:brightness-110 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                    Save Permissions
+                </button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-6">
+<!-- Left Column: General & Resource Level -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+<!-- General Permissions Card -->
+<section class="bg-surface-container border border-surface-bright rounded-xl overflow-hidden">
+<div class="px-6 py-4 border-b border-surface-bright flex items-center gap-3 bg-surface-container-high">
+<span class="material-symbols-outlined text-secondary">admin_panel_settings</span>
+<h3 class="font-headline-sm text-headline-sm">General Permissions</h3>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+<!-- Toggle Item 1 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant rounded-lg">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface">System Configuration</p>
+<p class="text-[12px] text-on-surface-variant mt-1">Modify core engine parameters</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface-variant after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary-container peer-checked:after:bg-surface"></div>
+</label>
+</div>
+<!-- Toggle Item 2 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant rounded-lg">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface">User Provisioning</p>
+<p class="text-[12px] text-on-surface-variant mt-1">Create and manage identities</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface-variant after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary-container peer-checked:after:bg-surface"></div>
+</label>
+</div>
+<!-- Toggle Item 3 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant rounded-lg">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface">Global Audit Access</p>
+<p class="text-[12px] text-on-surface-variant mt-1">View cross-tenant activity logs</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface-variant after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary-container peer-checked:after:bg-surface"></div>
+</label>
+</div>
+<!-- Toggle Item 4 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant rounded-lg">
+<div>
+<p class="font-label-caps text-label-caps text-error">Emergency Lockout</p>
+<p class="text-[12px] text-on-surface-variant mt-1">Kill-switch for all active sessions</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface-variant after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-error-container peer-checked:after:bg-surface"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Resource-Level Access Card -->
+<section class="bg-surface-container border border-surface-bright rounded-xl overflow-hidden">
+<div class="px-6 py-4 border-b border-surface-bright flex items-center justify-between bg-surface-container-high">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">database</span>
+<h3 class="font-headline-sm text-headline-sm">Resource-Level Access</h3>
+</div>
+<div class="flex gap-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Bulk Action:</span>
+<button class="text-[11px] font-label-caps text-secondary underline">Enable All Read</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant">Resource Entity</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant text-center">Read</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant text-center">Write</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant text-center">Delete</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant text-center">Approve</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant text-right">Identifier</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<!-- Grades Row -->
+<tr class="permission-row transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">school</span>
+<span class="font-body-md text-on-surface">Grades</span>
+</div>
+</td>
+<td class="px-4 py-4 text-center">
+<input checked="" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-4 py-4 text-center">
+<input checked="" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-4 py-4 text-center">
+<input class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-4 py-4 text-center">
+<input checked="" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="font-code-md text-code-md text-on-surface-variant">RES_001_ACAD</span>
+</td>
+</tr>
+<!-- Enrollments Row -->
+<tr class="permission-row transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">person_add</span>
+<span class="font-body-md text-on-surface">Enrollments</span>
+</div>
+</td>
+<td class="px-4 py-4 text-center">
+<input checked="" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-4 py-4 text-center">
+<input checked="" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-4 py-4 text-center">
+<input checked="" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-4 py-4 text-center">
+<input checked="" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="font-code-md text-code-md text-on-surface-variant">RES_002_REGR</span>
+</td>
+</tr>
+<!-- Courses Row -->
+<tr class="permission-row transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">book</span>
+<span class="font-body-md text-on-surface">Courses</span>
+</div>
+</td>
+<td class="px-4 py-4 text-center">
+<input checked="" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-4 py-4 text-center">
+<input checked="" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-4 py-4 text-center">
+<input class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-4 py-4 text-center">
+<input class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary" type="checkbox"/>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="font-code-md text-code-md text-on-surface-variant">RES_003_CURR</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Column: Custom Rules & Summary -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<!-- Custom Rules & Exceptions -->
+<section class="bg-surface-container border border-surface-bright rounded-xl overflow-hidden flex-1">
+<div class="px-6 py-4 border-b border-surface-bright flex items-center justify-between bg-surface-container-high">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">rule</span>
+<h3 class="font-headline-sm text-headline-sm">Custom Rules</h3>
+</div>
+<button class="p-1 hover:bg-surface-variant rounded">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<div class="p-6 space-y-4">
+<!-- Rule 1 -->
+<div class="p-4 bg-surface-container-low border-l-4 border-secondary border-y border-r border-outline-variant rounded-r-lg">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-label-caps rounded">IP RESTRICTION</span>
+<button class="text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<p class="font-body-md text-on-surface">Allow Access only via VPN</p>
+<p class="font-code-md text-[11px] text-on-surface-variant mt-2">IF ip_range NOT IN system.whitelist THEN deny()</p>
+</div>
+<!-- Rule 2 -->
+<div class="p-4 bg-surface-container-low border-l-4 border-tertiary border-y border-r border-outline-variant rounded-r-lg">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-0.5 bg-tertiary-container text-tertiary text-[10px] font-label-caps rounded">SOD CONFLICT</span>
+<button class="text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<p class="font-body-md text-on-surface">Prevent Registrar Overlap</p>
+<p class="font-code-md text-[11px] text-on-surface-variant mt-2">DENY IF user.has_role('Registrar') AND action == 'Grades.Delete'</p>
+</div>
+<button class="w-full py-3 border-2 border-dashed border-outline-variant rounded-lg flex items-center justify-center gap-2 text-on-surface-variant hover:text-secondary hover:border-secondary transition-all group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">post_add</span>
+<span class="font-label-caps text-label-caps">Add Custom Permission</span>
+</button>
+</div>
+</section>
+<!-- Status Summary Section -->
+<section class="bg-primary-container border border-secondary/30 rounded-xl p-6">
+<h4 class="font-label-caps text-label-caps text-secondary mb-4">Policy Health Scan</h4>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-[12px]">Authorization Latency</span>
+<span class="font-code-md text-code-md text-secondary">12ms</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-[12px]">Logic Complexity</span>
+<span class="font-code-md text-code-md text-on-surface">O(log n)</span>
+</div>
+<div class="h-[1px] bg-outline-variant/30 w-full"></div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary-fixed-dim text-[20px]">check_circle</span>
+<p class="text-[12px] text-on-surface leading-relaxed">Administrator role complies with <strong>NIST SP 800-53</strong> access control families. No circular inheritance detected.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<script>
+        // Simple micro-interaction for checkboxes
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const row = this.closest('tr');
+                if (row) {
+                    if (this.checked) {
+                        row.classList.add('bg-secondary/5');
+                    } else {
+                        row.classList.remove('bg-secondary/5');
+                    }
+                }
+            });
+        });
+
+        // Atmospheric interaction: Hover glow effect for the Save button
+        const saveBtn = document.querySelector('button.active-glow');
+        saveBtn.addEventListener('mousemove', (e) => {
+            const rect = saveBtn.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            saveBtn.style.setProperty('--mouse-x', `${x}px`);
+            saveBtn.style.setProperty('--mouse-y', `${y}px`);
+        });
+    </script>
+</body></html>

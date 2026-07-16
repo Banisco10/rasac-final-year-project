@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RASAC Framework | Secure Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#b87500",
+                        "surface-container-high": "#1b2b3f",
+                        "primary-fixed-dim": "#bbc7df",
+                        "error": "#ffb4ab",
+                        "surface-container": "#102034",
+                        "outline": "#8f9097",
+                        "outline-variant": "#44474c",
+                        "surface-container-lowest": "#000f21",
+                        "secondary": "#45f0cf",
+                        "inverse-surface": "#d3e4fe",
+                        "on-primary-container": "#78849a",
+                        "on-error": "#690005",
+                        "inverse-primary": "#535f74",
+                        "surface": "#031427",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "background": "#031427",
+                        "on-primary-fixed": "#101c2e",
+                        "surface-tint": "#bbc7df",
+                        "on-surface-variant": "#c5c6cd",
+                        "on-tertiary": "#472a00",
+                        "surface-container-low": "#0b1c30",
+                        "primary-fixed": "#d7e3fc",
+                        "error-container": "#93000a",
+                        "primary": "#bbc7df",
+                        "secondary-container": "#00d3b3",
+                        "inverse-on-surface": "#213145",
+                        "tertiary-container": "#291700",
+                        "secondary-fixed-dim": "#27dfbe",
+                        "on-background": "#d3e4fe",
+                        "on-secondary-fixed-variant": "#005143",
+                        "surface-variant": "#26364a",
+                        "tertiary": "#ffb95f",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-secondary-container": "#005547",
+                        "surface-container-highest": "#26364a",
+                        "primary-container": "#0f1b2d",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#55fcda",
+                        "surface-bright": "#2a3a4f",
+                        "on-surface": "#d3e4fe",
+                        "on-primary-fixed-variant": "#3c475b",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-primary": "#253144",
+                        "surface-dim": "#031427",
+                        "on-secondary-fixed": "#00201a",
+                        "on-secondary": "#00382e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "2px",
+                        "lg": "4px",
+                        "xl": "8px",
+                        "full": "12px"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "density-comfortable": "16px",
+                        "margin-desktop": "32px",
+                        "density-compact": "8px",
+                        "margin-mobile": "16px",
+                        "container-max": "1440px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["DM Sans"],
+                        "code-md": ["JetBrains Mono"],
+                        "body-lg": ["DM Sans"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-md": ["DM Sans"],
+                        "headline-lg": ["DM Sans"],
+                        "headline-md": ["DM Sans"],
+                        "body-sm": ["DM Sans"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "450"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        @keyframes scan {
+            0% { transform: translateY(-100%); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateY(100%); opacity: 0; }
+        }
+        .scan-line {
+            animation: scan 4s linear infinite;
+            background: linear-gradient(to bottom, transparent, #45f0cf, transparent);
+            height: 40px;
+            width: 100%;
+            position: absolute;
+            z-index: 10;
+        }
+        .node-pulse {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 2px #45f0cf); }
+            50% { filter: drop-shadow(0 0 8px #45f0cf); }
+        }
+        .flow-line {
+            stroke-dasharray: 10;
+            animation: dash 20s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: -1000; }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md selection:bg-secondary selection:text-on-secondary min-h-screen">
+<main class="flex min-h-screen">
+<!-- Left Side: Security Visualization -->
+<section class="hidden lg:flex w-1/2 relative bg-surface-container-lowest border-r border-outline-variant items-center justify-center overflow-hidden">
+<div class="scan-line top-0"></div>
+<!-- Atmospheric Grid Background -->
+<div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 24px 24px;"></div>
+<!-- Access Logic Visualizer SVG -->
+<div class="relative z-20 w-full max-w-lg px-margin-desktop">
+<div class="mb-12">
+<h2 class="font-headline-md text-headline-md text-primary mb-2">Governed Access</h2>
+<p class="font-body-md text-on-surface-variant max-w-sm">Visualizing the RASAC Tri-Layer Authorization Engine: Validating Identity, Context, and Policy in Real-Time.</p>
+</div>
+<svg class="w-full h-auto" viewbox="0 0 400 500">
+<!-- Vertical Connector Line -->
+<line class="flow-line" stroke="#1E293B" stroke-width="2" x1="200" x2="200" y1="50" y2="430"></line>
+<!-- Layer 1: ROLE -->
+<g class="node-pulse">
+<rect fill="#0F172A" height="60" rx="4" stroke="#45f0cf" stroke-width="1" width="140" x="130" y="30"></rect>
+<text class="font-label-caps text-[12px] font-bold" fill="#45f0cf" text-anchor="middle" x="200" y="60">LAYER 01: ROLE</text>
+<text class="font-code-md text-[10px]" fill="#d3e4fe" text-anchor="middle" x="200" y="75">RBAC IDENTIFICATION</text>
+</g>
+<!-- Layer 2: RELATIONSHIP -->
+<g transform="translate(0, 120)">
+<rect fill="#0F172A" height="60" rx="4" stroke="#1E293B" stroke-width="1" width="180" x="110" y="30"></rect>
+<text class="font-label-caps text-[12px]" fill="#bbc7df" text-anchor="middle" x="200" y="60">LAYER 02: RELATIONSHIP</text>
+<text class="font-code-md text-[10px]" fill="#8f9097" text-anchor="middle" x="200" y="75">ReBAC GRAPH TRAVERSAL</text>
+</g>
+<!-- Layer 3: CONTEXT -->
+<g transform="translate(0, 240)">
+<rect fill="#0F172A" height="60" rx="4" stroke="#1E293B" stroke-dasharray="4 2" stroke-width="1" width="140" x="130" y="30"></rect>
+<text class="font-label-caps text-[12px]" fill="#bbc7df" text-anchor="middle" x="200" y="60">LAYER 03: CONTEXT</text>
+<text class="font-code-md text-[10px]" fill="#8f9097" text-anchor="middle" x="200" y="75">ABAC ENVIRONMENT</text>
+</g>
+<!-- Layer 4: SoD (Separation of Duties) -->
+<g transform="translate(0, 360)">
+<path d="M100 30 L300 30 L310 60 L90 60 Z" fill="#291700" stroke="#ffb95f" stroke-width="1"></path>
+<text class="font-label-caps text-[12px] font-bold" fill="#ffb95f" text-anchor="middle" x="200" y="50">CONFLICT: SoD CHECK</text>
+</g>
+<!-- Final Grant -->
+<circle class="animate-pulse" cx="200" cy="460" fill="#45f0cf" r="12"></circle>
+<text class="font-label-caps text-[10px]" fill="#45f0cf" text-anchor="middle" x="200" y="490">ACCESS GRANTED</text>
+</svg>
+<div class="mt-12 grid grid-cols-2 gap-4">
+<div class="p-density-compact border border-outline-variant bg-surface-container-low">
+<span class="font-label-caps text-on-surface-variant block mb-1">NETWORK STATUS</span>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="font-code-md text-secondary">ENCRYPTED-NODE-04</span>
+</div>
+</div>
+<div class="p-density-compact border border-outline-variant bg-surface-container-low">
+<span class="font-label-caps text-on-surface-variant block mb-1">ACTIVE POLICIES</span>
+<div class="flex items-center gap-2">
+<span class="font-code-md text-primary">1,402 RULES</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Background Image for Branding -->
+<div class="absolute bottom-8 left-8 opacity-20 grayscale pointer-events-none">
+<img alt="Cybersecurity" class="w-32 h-32 object-cover rounded-lg" data-alt="A macro photograph of high-tech server hardware with glowing blue and green fiber optic cables. The lighting is low-key, emphasizing a sleek, industrial cybersecurity environment. The visual style is dark-mode focused with sharp focus on technical details and structural lines, evoking a sense of powerful, governed infrastructure." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSPaw-I-xQ-mPlErJM9aNHGK3qJxUO9O7PBCtpKScQ7u6ee4OyjqtWh9AExjpoTAYQLitLs9Y7m2se8FcDJhIBKurpG-46rbIfGPH7XIN0RCWuRxwhn3eTN_PTxZf7W7u7oIYyhz5DtetZwUEr9piBLCE9Glu5i_FhZCUH7RlDCfkHlxxi3w3191P5RHn7XBE2bFBx_ULdJ87w2NJobrm1tubYNah5qsrq5WfV-0y172fNgw9FrJEppb2lR2SYmpd77z6jobs7BfsQ"/>
+</div>
+</section>
+<!-- Right Side: Login Form -->
+<section class="w-full lg:w-1/2 flex flex-col items-center justify-center bg-surface px-margin-mobile md:px-margin-desktop py-12">
+<div class="w-full max-w-[400px]">
+<!-- Header -->
+<header class="mb-10 text-center lg:text-left">
+<div class="inline-flex items-center gap-2 mb-6">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-surface text-[20px]" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">RASAC Framework</h1>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2">System Authentication</h2>
+<p class="font-body-sm text-on-surface-variant">Authorized higher education personnel only.</p>
+</header>
+<!-- Status Messages -->
+<div class="hidden mb-6 p-density-comfortable bg-error-container/20 border border-error text-on-error-container flex items-start gap-3" id="lockout-alert">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+<div>
+<p class="font-label-caps font-bold">ACCOUNT LOCKOUT RISK</p>
+<p class="font-body-sm">Multiple failed attempts detected from this IP. One attempt remaining before 30-minute lockout.</p>
+</div>
+</div>
+<!-- Form -->
+<form class="space-y-6" onsubmit="return false">
+<div class="space-y-1">
+<label class="font-label-caps text-on-surface-variant block" for="email">ADMINISTRATOR ID / EMAIL</label>
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-[18px]">badge</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant text-on-surface pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/30 transition-all font-code-md text-code-md" id="email" placeholder="u_admin_9921" type="text"/>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-on-surface-variant" for="password">SECURE ACCESS KEY</label>
+<a class="font-label-caps text-secondary hover:underline" href="#">RECOVER KEY</a>
+</div>
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-[18px]">key</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant text-on-surface pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/30 transition-all font-code-md text-code-md" id="password" placeholder="••••••••••••" type="password"/>
+</div>
+</div>
+<div class="flex items-center justify-between py-2">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 bg-surface-container-lowest border-outline-variant rounded-sm text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="font-body-sm text-on-surface-variant group-hover:text-on-surface transition-colors">Remember terminal session</span>
+</label>
+</div>
+<button class="w-full bg-secondary hover:bg-secondary-container text-on-secondary py-3 px-6 rounded-lg font-label-caps font-bold text-[14px] transition-all flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(69,240,207,0.2)] hover:shadow-[0_0_20px_rgba(69,240,207,0.4)]" type="submit">
+                        ESTABLISH CONNECTION
+                        <span class="material-symbols-outlined text-[18px]">login</span>
+</button>
+</form>
+<!-- Footer Metadata -->
+<footer class="mt-12 pt-8 border-t border-outline-variant space-y-4">
+<div class="flex items-center justify-between font-body-sm text-on-surface-variant">
+<span>Last Login:</span>
+<span class="font-code-md text-primary">2023-10-24 14:22:10 UTC</span>
+</div>
+<div class="flex items-center justify-between font-body-sm text-on-surface-variant">
+<span>Station IP:</span>
+<span class="font-code-md text-primary">192.168.1.104</span>
+</div>
+<div class="pt-4 flex flex-col gap-3">
+<a class="flex items-center gap-3 text-on-surface-variant hover:text-secondary transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="font-body-sm">Review System Documentation</span>
+<span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all">arrow_forward</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:text-secondary transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span class="font-body-sm">Contact Network Security Operations (NSOC)</span>
+</a>
+</div>
+</footer>
+</div>
+</section>
+</main>
+<!-- Micro-interactions Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Simulated Lockout Message logic (for demo)
+            const passwordInput = document.getElementById('password');
+            const lockoutAlert = document.getElementById('lockout-alert');
+            let attempts = 0;
+
+            passwordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    attempts++;
+                    if (attempts >= 2) {
+                        lockoutAlert.classList.remove('hidden');
+                        lockoutAlert.classList.add('flex');
+                    }
+                }
+            });
+
+            // Form Focus Glow Interaction
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    input.parentElement.querySelector('span').style.color = '#45f0cf';
+                });
+                input.addEventListener('blur', () => {
+                    input.parentElement.querySelector('span').style.color = '';
+                });
+            });
+        });
+    </script>
+</body></html>

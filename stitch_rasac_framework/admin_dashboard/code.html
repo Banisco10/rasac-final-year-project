@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RASAC Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #031427; /* surface-dim */
+            font-family: 'DM Sans', sans-serif;
+            color: #d3e4fe; /* on-surface */
+        }
+        .access-logic-line {
+            background: linear-gradient(90deg, transparent, #45f0cf, transparent);
+            height: 1px;
+            width: 100%;
+        }
+        .glow-teal {
+            box-shadow: 0 0 15px rgba(69, 240, 207, 0.15);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0b1c30;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+        .tri-layer-role { background-color: #bbc7df; color: #101c2e; } /* primary tint */
+        .tri-layer-rel { border: 1px solid #45f0cf; color: #45f0cf; } /* outlined secondary */
+        .tri-layer-context { border: 1px dotted #8f9097; color: #c5c6cd; } /* dotted outline-variant */
+        .tri-layer-sod { background-color: #ffb95f; color: #2a1700; } /* amber warning */
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-container": "#b87500",
+                      "surface-container-high": "#1b2b3f",
+                      "primary-fixed-dim": "#bbc7df",
+                      "error": "#ffb4ab",
+                      "surface-container": "#102034",
+                      "outline": "#8f9097",
+                      "outline-variant": "#44474c",
+                      "surface-container-lowest": "#000f21",
+                      "secondary": "#45f0cf",
+                      "inverse-surface": "#d3e4fe",
+                      "on-primary-container": "#78849a",
+                      "on-error": "#690005",
+                      "inverse-primary": "#535f74",
+                      "surface": "#031427",
+                      "tertiary-fixed-dim": "#ffb95f",
+                      "on-tertiary-fixed-variant": "#653e00",
+                      "background": "#031427",
+                      "on-primary-fixed": "#101c2e",
+                      "surface-tint": "#bbc7df",
+                      "on-surface-variant": "#c5c6cd",
+                      "on-tertiary": "#472a00",
+                      "surface-container-low": "#0b1c30",
+                      "primary-fixed": "#d7e3fc",
+                      "error-container": "#93000a",
+                      "primary": "#bbc7df",
+                      "secondary-container": "#00d3b3",
+                      "inverse-on-surface": "#213145",
+                      "tertiary-container": "#291700",
+                      "secondary-fixed-dim": "#27dfbe",
+                      "on-background": "#d3e4fe",
+                      "on-secondary-fixed-variant": "#005143",
+                      "surface-variant": "#26364a",
+                      "tertiary": "#ffb95f",
+                      "on-tertiary-fixed": "#2a1700",
+                      "on-secondary-container": "#005547",
+                      "surface-container-highest": "#26364a",
+                      "primary-container": "#0f1b2d",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed": "#55fcda",
+                      "surface-bright": "#2a3a4f",
+                      "on-surface": "#d3e4fe",
+                      "on-primary-fixed-variant": "#3c475b",
+                      "tertiary-fixed": "#ffddb8",
+                      "on-primary": "#253144",
+                      "surface-dim": "#031427",
+                      "on-secondary-fixed": "#00201a",
+                      "on-secondary": "#00382e"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "density-comfortable": "16px",
+                      "margin-desktop": "32px",
+                      "density-compact": "8px",
+                      "margin-mobile": "16px",
+                      "container-max": "1440px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "headline-sm": ["DM Sans"],
+                      "code-md": ["JetBrains Mono"],
+                      "body-lg": ["DM Sans"],
+                      "label-caps": ["JetBrains Mono"],
+                      "body-md": ["DM Sans"],
+                      "headline-lg": ["DM Sans"],
+                      "headline-md": ["DM Sans"],
+                      "body-sm": ["DM Sans"]
+              },
+              "fontSize": {
+                      "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "450"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar (Authority: JSON & Context) -->
+<aside class="flex flex-col h-full py-4 bg-surface-container-low dark:bg-surface-container-low text-secondary dark:text-secondary border-r border-outline-variant dark:border-outline-variant fixed left-0 top-0 w-[240px] z-50">
+<div class="font-headline-sm text-headline-sm text-primary dark:text-primary px-4 py-6 font-bold tracking-tight">
+            RASAC Admin
+            <div class="font-body-sm text-body-sm text-on-surface-variant font-normal">Higher Ed Security</div>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<!-- Dashboard Active -->
+<a class="flex items-center px-4 py-3 gap-3 transition-all duration-200 ease-in-out text-secondary dark:text-secondary bg-surface-container-highest dark:bg-surface-container-highest border-r-2 border-secondary group" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-caps text-label-caps">DASHBOARD</span>
+</a>
+<a class="flex items-center px-4 py-3 gap-3 transition-all duration-200 ease-in-out text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container dark:hover:bg-surface-container group" href="#">
+<span class="material-symbols-outlined">security</span>
+<span class="font-label-caps text-label-caps">ACCESS CONTROL</span>
+</a>
+<a class="flex items-center px-4 py-3 gap-3 transition-all duration-200 ease-in-out text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container dark:hover:bg-surface-container group" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="font-label-caps text-label-caps">AUDIT LOGS</span>
+</a>
+<a class="flex items-center px-4 py-3 gap-3 transition-all duration-200 ease-in-out text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container dark:hover:bg-surface-container group" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-label-caps text-label-caps">ACADEMIC PERIODS</span>
+</a>
+<a class="flex items-center px-4 py-3 gap-3 transition-all duration-200 ease-in-out text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container dark:hover:bg-surface-container group" href="#">
+<span class="material-symbols-outlined">rule</span>
+<span class="font-label-caps text-label-caps">POLICY ENGINE</span>
+</a>
+<a class="flex items-center px-4 py-3 gap-3 transition-all duration-200 ease-in-out text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container dark:hover:bg-surface-container group" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">SYSTEM SETTINGS</span>
+</a>
+</nav>
+<div class="mt-auto px-2 border-t border-outline-variant pt-4 space-y-1">
+<a class="flex items-center px-4 py-2 gap-3 text-on-surface-variant font-body-sm text-body-sm hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">description</span>
+<span>Documentation</span>
+</a>
+<a class="flex items-center px-4 py-2 gap-3 text-on-surface-variant font-body-sm text-body-sm hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">help</span>
+<span>Support</span>
+</a>
+<div class="flex items-center gap-3 px-4 py-4 mt-2">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center border border-outline-variant overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBkN9PMGNaKHXy0sjsloLdQns6rmktD87Qd4xt3gngP5_LZhw0MhMTlslM4qalT6cyKklSC2zwlTODRtbqJpD6ZRmfQi1tRRG0K8qEhveAVPeVa9AIOGW913d7iXrkcuXOsvgGslP8E4T9kDAtdKDV404niUb-dK2_OTBjpyRfNkBOwP0QRs5Eu6byjuh-xFBWkef98ZTVoo6J90-GgQD3Q66ml3Q3xa3nwH786RkbuveL93RU9ft47vVp8IXEpH_gujw7WLLK8b_8"/>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-primary">ADMIN_01</span>
+<span class="text-[10px] text-on-surface-variant opacity-70">Security Principal</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Staging Area -->
+<main class="ml-[240px] min-h-screen p-8 bg-surface dark:bg-surface">
+<!-- Header / Top Bar (Authority: JSON Integrated) -->
+<header class="flex justify-between items-center w-full h-16 sticky top-0 z-40 mb-8 bg-surface/80 backdrop-blur-md">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Security Command</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Relationship-Based Access Control Overview</p>
+</div>
+<div class="flex items-center gap-6">
+<!-- Search Mockup -->
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="bg-surface-container-low border border-outline-variant rounded px-10 py-1.5 text-body-sm focus:outline-none focus:border-secondary transition-all w-64" placeholder="Search security logs..." type="text"/>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">history</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
+</div>
+</div>
+</header>
+<!-- Dynamic Content Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Academic Period Banner -->
+<div class="col-span-12 lg:col-span-8 bg-primary-container/30 border border-primary/20 p-6 flex justify-between items-center relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+<div class="flex items-center gap-6">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-secondary mb-1">CURRENT STATUS</span>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md font-bold text-on-primary-fixed">FALL 2024 ENROLLMENT</span>
+<span class="bg-secondary/20 text-secondary px-2 py-0.5 rounded text-[10px] font-bold border border-secondary/30">OPEN</span>
+</div>
+</div>
+<div class="h-10 w-px bg-outline-variant"></div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">PERIOD ENDS IN</span>
+<span class="font-code-md text-code-md text-primary tracking-widest">14D : 08H : 22M : 41S</span>
+</div>
+</div>
+<button class="bg-secondary text-on-secondary px-4 py-2 font-label-caps text-label-caps hover:brightness-110 transition-all rounded shadow-sm">
+                    MANAGE PERIOD
+                </button>
+</div>
+<!-- Security Overview Cards -->
+<div class="col-span-12 lg:col-span-4 grid grid-cols-2 gap-4">
+<div class="bg-surface-container p-4 border border-outline-variant">
+<span class="font-label-caps text-label-caps text-on-surface-variant">TOTAL USERS</span>
+<div class="text-headline-md font-headline-md mt-2">12,492</div>
+<div class="text-[10px] text-secondary mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span> +3% this week
+                    </div>
+</div>
+<div class="bg-surface-container p-4 border border-outline-variant">
+<span class="font-label-caps text-label-caps text-on-surface-variant">ACTIVE SESSIONS</span>
+<div class="text-headline-md font-headline-md mt-2">1,822</div>
+<div class="text-[10px] text-on-surface-variant mt-1">Cluster: US-EAST-1</div>
+</div>
+<div class="bg-surface-container p-4 border border-outline-variant col-span-2">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-error">DENIALS TODAY</span>
+<span class="font-headline-sm text-headline-sm text-error">142</span>
+</div>
+<div class="mt-4 flex gap-1 h-1.5 rounded-full overflow-hidden bg-surface-container-lowest">
+<div class="h-full bg-primary" style="width: 45%"></div>
+<div class="h-full bg-secondary" style="width: 25%"></div>
+<div class="h-full bg-outline" style="width: 20%"></div>
+<div class="h-full bg-tertiary" style="width: 10%"></div>
+</div>
+<div class="flex justify-between mt-3">
+<span class="text-[9px] text-on-surface-variant font-code-md">ROLE (45%)</span>
+<span class="text-[9px] text-on-surface-variant font-code-md">REL (25%)</span>
+<span class="text-[9px] text-on-surface-variant font-code-md">CONT (20%)</span>
+<span class="text-[9px] text-on-surface-variant font-code-md">SOD (10%)</span>
+</div>
+</div>
+</div>
+<!-- Tri-Layer Access Decision Donut Chart -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container p-6 border border-outline-variant flex flex-col h-[400px]">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-label-caps text-label-caps text-primary">DENIAL DISTRIBUTION</h3>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">info</span>
+</div>
+<div class="flex-1 flex items-center justify-center relative">
+<!-- SVG Donut Chart -->
+<svg class="w-48 h-48 -rotate-90" viewbox="0 0 100 100">
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#1E293B" stroke-width="8"></circle>
+<!-- Role (45%) -->
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#bbc7df" stroke-dasharray="113.1 138.2" stroke-dashoffset="0" stroke-width="8"></circle>
+<!-- Rel (25%) -->
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#45f0cf" stroke-dasharray="62.8 188.5" stroke-dashoffset="-113.1" stroke-width="8"></circle>
+<!-- Context (20%) -->
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#8f9097" stroke-dasharray="50.3 201" stroke-dashoffset="-175.9" stroke-width="8"></circle>
+<!-- SoD (10%) -->
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#ffb95f" stroke-dasharray="25.1 226.2" stroke-dashoffset="-226.2" stroke-width="8"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="font-headline-md text-headline-md text-on-surface">RASAC</span>
+<span class="text-[10px] text-on-surface-variant font-code-md uppercase tracking-widest">Logic Path</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mt-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-primary rounded-full"></div>
+<span class="text-[11px] font-label-caps text-on-surface-variant">INSUFFICIENT ROLE</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-secondary rounded-full"></div>
+<span class="text-[11px] font-label-caps text-on-surface-variant">RELATIONSHIP MISMATCH</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-outline rounded-full"></div>
+<span class="text-[11px] font-label-caps text-on-surface-variant">CONTEXT VIOLATION</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-tertiary rounded-full"></div>
+<span class="text-[11px] font-label-caps text-on-surface-variant">SOD CONFLICT</span>
+</div>
+</div>
+</div>
+<!-- Real-Time Security Events Feed -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container border border-outline-variant h-[400px] flex flex-col">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-label-caps text-label-caps text-primary">REAL-TIME EVENTS</h3>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+<span class="text-[10px] font-code-md text-secondary">LIVE MONITOR</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-0">
+<div class="border-b border-outline-variant/30 p-3 hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-1">
+<span class="font-code-md text-code-md text-on-surface">USR_9921 -&gt; VIEW_GRADES</span>
+<span class="text-[10px] text-secondary font-code-md">GRANTED</span>
+</div>
+<div class="flex gap-2">
+<span class="tri-layer-role text-[9px] px-1.5 py-0.5 rounded font-bold">PROFESSOR</span>
+<span class="tri-layer-rel text-[9px] px-1.5 py-0.5 rounded font-bold">INSTRUCTOR_OF</span>
+<span class="tri-layer-context text-[9px] px-1.5 py-0.5 rounded font-bold">CAMPUS_IP</span>
+</div>
+<div class="text-[9px] text-on-surface-variant mt-2">14:22:01 | Access Logic: Implicit Relationship Verified</div>
+</div>
+<div class="border-b border-outline-variant/30 p-3 hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-1">
+<span class="font-code-md text-code-md text-on-surface">USR_4402 -&gt; EDIT_GPA</span>
+<span class="text-[10px] text-error font-code-md">DENIED</span>
+</div>
+<div class="flex gap-2">
+<span class="tri-layer-role text-[9px] px-1.5 py-0.5 rounded font-bold">REGISTRAR</span>
+<span class="tri-layer-sod text-[9px] px-1.5 py-0.5 rounded font-bold">SOD_CONFLICT</span>
+</div>
+<div class="text-[9px] text-on-surface-variant mt-2">14:21:44 | Policy: User cannot approve grades for self-enrolled courses</div>
+</div>
+<div class="border-b border-outline-variant/30 p-3 hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-1">
+<span class="font-code-md text-code-md text-on-surface">USR_1012 -&gt; LAB_ACCESS</span>
+<span class="text-[10px] text-secondary font-code-md">GRANTED</span>
+</div>
+<div class="flex gap-2">
+<span class="tri-layer-role text-[9px] px-1.5 py-0.5 rounded font-bold">STUDENT</span>
+<span class="tri-layer-rel text-[9px] px-1.5 py-0.5 rounded font-bold">RESEARCH_ASST</span>
+<span class="tri-layer-context text-[9px] px-1.5 py-0.5 rounded font-bold">TIME_WINDOW</span>
+</div>
+<div class="text-[9px] text-on-surface-variant mt-2">14:21:12 | Access Logic: Contextual Waiver Applied</div>
+</div>
+<div class="border-b border-outline-variant/30 p-3 hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-1">
+<span class="font-code-md text-code-md text-on-surface">USR_3382 -&gt; ROOT_SUDO</span>
+<span class="text-[10px] text-error font-code-md">DENIED</span>
+</div>
+<div class="flex gap-2">
+<span class="tri-layer-context text-[9px] px-1.5 py-0.5 rounded font-bold">GEO_BLOCK</span>
+</div>
+<div class="text-[9px] text-on-surface-variant mt-2">14:20:55 | Threat: Access attempt from unauthorized region (RU)</div>
+</div>
+</div>
+</div>
+<!-- Grade Approval Queue -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container border border-outline-variant h-[400px] flex flex-col">
+<div class="p-4 border-b border-outline-variant">
+<h3 class="font-label-caps text-label-caps text-primary">GRADE APPROVAL QUEUE</h3>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="p-3 font-label-caps text-[10px] text-on-surface-variant border-b border-outline-variant">SUBJECT</th>
+<th class="p-3 font-label-caps text-[10px] text-on-surface-variant border-b border-outline-variant">STATUS</th>
+<th class="p-3 font-label-caps text-[10px] text-on-surface-variant border-b border-outline-variant">ACTION</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm">
+<tr class="border-b border-outline-variant/30">
+<td class="p-3">
+<div class="font-code-md">CS-401 Final</div>
+<div class="text-[10px] text-on-surface-variant">Dept: CompSci</div>
+</td>
+<td class="p-3">
+<span class="text-tertiary font-bold text-[10px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span> SoD Risk
+                                    </span>
+</td>
+<td class="p-3">
+<button class="text-secondary hover:underline font-bold">REVIEW</button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="p-3">
+<div class="font-code-md">BIO-202 Midterm</div>
+<div class="text-[10px] text-on-surface-variant">Dept: LifeSci</div>
+</td>
+<td class="p-3">
+<span class="text-on-surface-variant text-[10px]">PENDING</span>
+</td>
+<td class="p-3">
+<button class="text-secondary hover:underline font-bold">APPROVE</button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="p-3">
+<div class="font-code-md">HIS-101 Quiz 4</div>
+<div class="text-[10px] text-on-surface-variant">Dept: Humanities</div>
+</td>
+<td class="p-3">
+<span class="text-on-surface-variant text-[10px]">PENDING</span>
+</td>
+<td class="p-3">
+<button class="text-secondary hover:underline font-bold">APPROVE</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface-container-low border-t border-outline-variant">
+<button class="w-full py-2 bg-transparent border border-outline-variant text-on-surface font-label-caps text-label-caps hover:bg-surface-container-highest transition-colors">
+                        VIEW ALL (24)
+                    </button>
+</div>
+</div>
+<!-- Comparison Table: RBAC vs RASAC Logic -->
+<div class="col-span-12 bg-surface-container border border-outline-variant overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-surface-container-low">
+<h3 class="font-label-caps text-label-caps text-primary">ACCESS ARCHITECTURE COMPARISON</h3>
+</div>
+<table class="w-full text-left">
+<thead>
+<tr class="text-on-surface-variant border-b border-outline-variant">
+<th class="p-4 font-label-caps text-label-caps">FEATURE</th>
+<th class="p-4 font-label-caps text-label-caps bg-surface-container-highest/20">TRADITIONAL RBAC</th>
+<th class="p-4 font-label-caps text-label-caps bg-secondary/10 text-secondary">RASAC (IMPLEMENTED)</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-outline-variant/30">
+<td class="p-4 font-bold">Decision Source</td>
+<td class="p-4 text-on-surface-variant italic">Static Role Membership</td>
+<td class="p-4 text-on-surface">Dynamic Relationship + Context</td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="p-4 font-bold">Hierarchy</td>
+<td class="p-4 text-on-surface-variant italic">Rigid Parent-Child</td>
+<td class="p-4 text-on-surface">Fluid Graph-Based Relationships</td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="p-4 font-bold">SoD Enforcement</td>
+<td class="p-4 text-on-surface-variant italic">Manual Role Exclusion</td>
+<td class="p-4 text-on-surface">Automated Cross-Entity Conflict Check</td>
+</tr>
+<tr>
+<td class="p-4 font-bold">Scale Path</td>
+<td class="p-4 text-on-surface-variant italic">Role Explosion (O^n)</td>
+<td class="p-4 text-on-surface">Linear Relationship Scaling</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- System Status Footer -->
+<footer class="mt-12 flex justify-between items-center text-on-surface-variant">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+<span class="font-code-md text-[11px]">API GATEWAY: 12ms</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+<span class="font-code-md text-[11px]">GRAPH DB: HEALTHY</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 bg-error rounded-full"></div>
+<span class="font-code-md text-[11px]">POLICY SYNC: LAGGING (4s)</span>
+</div>
+</div>
+<div class="font-code-md text-[11px] opacity-40">
+                RASAC ENGINE v2.4.0-STABLE | BUILD_ID: 88AF2C
+            </div>
+</footer>
+</main>
+<!-- Contextual FAB (Hidden on Dash per Rules, but here as reference) -->
+<!-- <button class="fixed bottom-8 right-8 w-14 h-14 bg-secondary text-on-secondary rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+        <span class="material-symbols-outlined">add</span>
+    </button> -->
+<script>
+        // Micro-interactions for real-time vibe
+        setInterval(() => {
+            const timeSpan = document.querySelector('.font-code-md.tracking-widest');
+            if (timeSpan) {
+                const parts = timeSpan.innerText.split(' : ');
+                let seconds = parseInt(parts[3].replace('S', ''));
+                seconds = seconds > 0 ? seconds - 1 : 59;
+                parts[3] = (seconds < 10 ? '0' : '') + seconds + 'S';
+                timeSpan.innerText = parts.join(' : ');
+            }
+        }, 1000);
+    </script>
+</body></html>

@@ -1,0 +1,17 @@
+{
+  "name": "enhanced-rbac-hei",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace server\" \"npm run dev --workspace client\"",
+    "build": "npm run build --workspace server && npm run build --workspace client",
+    "lint": "echo \"Add linting if desired\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

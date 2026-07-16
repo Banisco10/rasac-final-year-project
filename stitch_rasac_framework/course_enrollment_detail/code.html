@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CS-401 Enrollment Detail | RASAC Framework</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-gradient-teal {
+            background: linear-gradient(180deg, rgba(69, 240, 207, 0.05) 0%, rgba(69, 240, 207, 0) 100%);
+        }
+        .active-teal-border {
+            border-top: 1px solid #45f0cf;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary": "#00382e",
+                      "surface-container-low": "#0b1c30",
+                      "primary-fixed": "#d7e3fc",
+                      "on-tertiary-container": "#b87500",
+                      "secondary": "#45f0cf",
+                      "on-surface": "#d3e4fe",
+                      "primary": "#bbc7df",
+                      "on-primary-fixed": "#101c2e",
+                      "inverse-surface": "#d3e4fe",
+                      "surface-tint": "#bbc7df",
+                      "on-tertiary-fixed": "#2a1700",
+                      "on-surface-variant": "#c5c6cd",
+                      "secondary-container": "#00d3b3",
+                      "tertiary-container": "#291700",
+                      "tertiary-fixed-dim": "#ffb95f",
+                      "on-error-container": "#ffdad6",
+                      "on-error": "#690005",
+                      "on-primary-container": "#78849a",
+                      "primary-container": "#0f1b2d",
+                      "error": "#ffb4ab",
+                      "surface-container-high": "#1b2b3f",
+                      "secondary-fixed-dim": "#27dfbe",
+                      "inverse-primary": "#535f74",
+                      "tertiary-fixed": "#ffddb8",
+                      "surface-variant": "#26364a",
+                      "surface-container-lowest": "#000f21",
+                      "surface-container-highest": "#26364a",
+                      "secondary-fixed": "#55fcda",
+                      "on-secondary-fixed-variant": "#005143",
+                      "inverse-on-surface": "#213145",
+                      "on-tertiary-fixed-variant": "#653e00",
+                      "surface-bright": "#2a3a4f",
+                      "tertiary": "#ffb95f",
+                      "primary-fixed-dim": "#bbc7df",
+                      "surface": "#031427",
+                      "outline-variant": "#44474c",
+                      "on-primary": "#253144",
+                      "on-secondary-container": "#005547",
+                      "on-background": "#d3e4fe",
+                      "on-tertiary": "#472a00",
+                      "error-container": "#93000a",
+                      "background": "#031427",
+                      "outline": "#8f9097",
+                      "on-secondary-fixed": "#00201a",
+                      "on-primary-fixed-variant": "#3c475b",
+                      "surface-container": "#102034",
+                      "surface-dim": "#031427"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "density-compact": "8px",
+                      "gutter": "16px",
+                      "density-comfortable": "16px",
+                      "container-max": "1440px",
+                      "unit": "4px",
+                      "margin-desktop": "32px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "body-sm": ["DM Sans"],
+                      "body-md": ["DM Sans"],
+                      "label-caps": ["JetBrains Mono"],
+                      "headline-lg": ["DM Sans"],
+                      "body-lg": ["DM Sans"],
+                      "headline-md": ["DM Sans"],
+                      "code-md": ["JetBrains Mono"],
+                      "headline-sm": ["DM Sans"]
+              },
+              "fontSize": {
+                      "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "450"}],
+                      "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<!-- Sidebar Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full w-[240px] bg-surface-container dark:bg-surface-container border-r border-outline-variant z-50 flex flex-col py-density-comfortable">
+<div class="px-6 mb-8">
+<h1 class="text-headline-md font-headline-md text-secondary">RASAC Admin</h1>
+<p class="text-label-caps font-label-caps text-on-surface-variant uppercase">Higher Ed Security</p>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">dashboard</span>
+<span class="text-body-sm font-label-caps">Dashboard</span>
+</a>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">security</span>
+<span class="text-body-sm font-label-caps">Access Control</span>
+</a>
+<a class="flex items-center px-4 py-3 text-secondary bg-surface-container-high border-r-2 border-secondary transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">school</span>
+<span class="text-body-sm font-label-caps">Courses</span>
+</a>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">list_alt</span>
+<span class="text-body-sm font-label-caps">Audit Logs</span>
+</a>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">settings_applications</span>
+<span class="text-body-sm font-label-caps">System Settings</span>
+</a>
+</nav>
+<div class="px-4 mb-4">
+<button class="w-full bg-error text-on-error py-2 font-label-caps text-label-caps rounded-lg flex items-center justify-center gap-2 active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">lock_reset</span>
+                Emergency Lockout
+            </button>
+</div>
+<div class="px-2 pt-4 border-t border-outline-variant">
+<a class="flex items-center px-4 py-2 text-on-surface-variant hover:text-on-surface font-label-caps text-body-sm" href="#">
+<span class="material-symbols-outlined mr-3">help</span> Documentation
+            </a>
+<a class="flex items-center px-4 py-2 text-on-surface-variant hover:text-on-surface font-label-caps text-body-sm" href="#">
+<span class="material-symbols-outlined mr-3">contact_support</span> Support
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[240px] flex flex-col h-screen">
+<!-- Top Navigation Shell -->
+<header class="flex justify-between items-center w-full px-gutter h-14 z-50 bg-surface dark:bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<span class="text-headline-sm font-headline-sm text-on-surface dark:text-on-surface">RASAC Framework</span>
+<div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant mr-2 text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm text-on-surface w-64 placeholder:text-on-surface-variant/50" placeholder="Search system resources..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-secondary transition-colors cursor-pointer"><span class="material-symbols-outlined">notifications</span></button>
+<button class="text-on-surface-variant hover:text-secondary transition-colors cursor-pointer"><span class="material-symbols-outlined">settings</span></button>
+<div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden border border-outline-variant">
+<img alt="Admin" class="w-full h-full object-cover" data-alt="A professional portrait of a senior system administrator in a high-tech server room environment. The lighting is low and focused, with soft blue and teal highlights reflecting off server racks in the background. The individual has a confident, experienced expression, conveying a sense of technological mastery and security oversight. Minimalist, industrial aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA13SwaWmIVCImgl0RCFBgfraNcZgpt8sBDwSctukJ7Nl-Hh6-Pow9YqomUKJ0GJCnQwCKLD1VhFDMdgMNIQTaUhtmLiNY4i0-9Irkb94nFW8r1U_biGXe5jdeXADDF5l6f-4H8ljBHgAvr3L5bl98mAQMNTgHBj7M2GIr3j6EEzymCWl2IuKzA-fXGrMrXtyK1ZeCMuuWTgDk65bPenc2-PvB13vbk4A0sD2p4BzlqxDt481kRhCWou2i_uQCeDfXa4XHFmdZN05b_"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="flex-1 overflow-y-auto p-margin-desktop bg-background">
+<!-- Page Header -->
+<div class="mb-8">
+<div class="flex items-center gap-4 text-secondary mb-2">
+<span class="font-code-md text-code-md tracking-widest bg-secondary/10 px-2 py-0.5 rounded">CS-401</span>
+<span class="h-px w-12 bg-outline-variant"></span>
+<span class="text-label-caps font-label-caps text-on-surface-variant">COURSE ENROLLMENT DETAIL</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Advanced Cryptography &amp; RASAC</h2>
+<div class="flex items-center gap-6 mt-2 text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span class="text-body-md">Semester 2, 2024/2025</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">person</span>
+<span class="text-body-md">Lecturer: <span class="text-secondary">Dr. Aris Thorne</span></span>
+</div>
+</div>
+</div>
+<!-- Stats Row -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-8">
+<div class="bg-surface-container-low border border-outline-variant p-density-comfortable relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-0.5 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<p class="text-label-caps font-label-caps text-on-surface-variant mb-2">TOTAL ENROLLED</p>
+<div class="flex items-baseline gap-2">
+<span class="text-headline-md font-headline-md text-on-surface">128</span>
+<span class="text-on-surface-variant">/ 150</span>
+</div>
+<div class="mt-4 w-full bg-surface-container-highest h-1 rounded-full">
+<div class="bg-secondary h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-density-comfortable relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-0.5 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<p class="text-label-caps font-label-caps text-on-surface-variant mb-2">ATTENDANCE AVG</p>
+<div class="flex items-baseline gap-2">
+<span class="text-headline-md font-headline-md text-on-surface">94%</span>
+<span class="text-secondary text-[12px] material-symbols-outlined">trending_up</span>
+</div>
+<p class="text-label-caps font-label-caps text-secondary text-[10px] mt-4">+2% from last week</p>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-density-comfortable relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-0.5 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<p class="text-label-caps font-label-caps text-on-surface-variant mb-2">AVERAGE PROGRESS</p>
+<div class="flex items-baseline gap-2">
+<span class="text-headline-md font-headline-md text-on-surface">68%</span>
+</div>
+<div class="mt-4 flex gap-1">
+<div class="flex-1 h-1 bg-secondary"></div>
+<div class="flex-1 h-1 bg-secondary"></div>
+<div class="flex-1 h-1 bg-secondary"></div>
+<div class="flex-1 h-1 bg-surface-container-highest"></div>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-density-comfortable relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-0.5 bg-tertiary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<p class="text-label-caps font-label-caps text-on-surface-variant mb-2">STATUS</p>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></div>
+<span class="text-body-lg font-bold text-tertiary">Grading Window Open</span>
+</div>
+<p class="text-label-caps font-label-caps text-on-surface-variant text-[10px] mt-4">CLOSES IN 4 DAYS</p>
+</div>
+</div>
+<!-- Student List Section -->
+<div class="bg-surface-container-low border border-outline-variant rounded-sm overflow-hidden">
+<div class="px-gutter py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Enrolled Students</h3>
+<div class="flex gap-2">
+<button class="bg-surface-container-highest text-on-surface-variant px-3 py-1 text-label-caps rounded flex items-center gap-2 hover:text-on-surface border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">filter_list</span> Filter
+                        </button>
+<button class="bg-surface-container-highest text-on-surface-variant px-3 py-1 text-label-caps rounded flex items-center gap-2 hover:text-on-surface border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">download</span> Export CSV
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container/50">
+<th class="px-gutter py-3 text-label-caps text-on-surface-variant border-b border-outline-variant">STUDENT NAME &amp; ID</th>
+<th class="px-gutter py-3 text-label-caps text-on-surface-variant border-b border-outline-variant">ENROLLMENT DATE</th>
+<th class="px-gutter py-3 text-label-caps text-on-surface-variant border-b border-outline-variant">PROGRESS</th>
+<th class="px-gutter py-3 text-label-caps text-on-surface-variant border-b border-outline-variant">STATUS</th>
+<th class="px-gutter py-3 text-label-caps text-on-surface-variant border-b border-outline-variant">ATTENDANCE</th>
+<th class="px-gutter py-3 text-label-caps text-on-surface-variant border-b border-outline-variant text-right">ACTION</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<!-- Student 1 -->
+<tr class="hover:bg-surface-container-highest/30 transition-colors group">
+<td class="px-gutter py-4">
+<div class="flex flex-col">
+<span class="text-on-surface font-bold">Godsway Baniba</span>
+<span class="text-code-md font-label-caps text-secondary text-[11px]">[11330842]</span>
+</div>
+</td>
+<td class="px-gutter py-4 text-on-surface-variant font-code-md">2024-09-12</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<div class="flex-1 bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full" style="width: 88%"></div>
+</div>
+<span class="text-code-md font-label-caps text-secondary">88%</span>
+</div>
+</td>
+<td class="px-gutter py-4">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps bg-secondary/10 text-secondary border border-secondary/20">ACTIVE</span>
+</td>
+<td class="px-gutter py-4 text-on-surface font-code-md">98%</td>
+<td class="px-gutter py-4 text-right">
+<button class="bg-transparent border border-outline text-on-surface hover:border-secondary hover:text-secondary px-4 py-1.5 rounded text-label-caps transition-all">VIEW PROFILE</button>
+</td>
+</tr>
+<!-- Student 2 -->
+<tr class="hover:bg-surface-container-highest/30 transition-colors group">
+<td class="px-gutter py-4">
+<div class="flex flex-col">
+<span class="text-on-surface font-bold">Elena Rodriguez</span>
+<span class="text-code-md font-label-caps text-secondary text-[11px]">[11450289]</span>
+</div>
+</td>
+<td class="px-gutter py-4 text-on-surface-variant font-code-md">2024-09-14</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<div class="flex-1 bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full" style="width: 42%"></div>
+</div>
+<span class="text-code-md font-label-caps text-tertiary">42%</span>
+</div>
+</td>
+<td class="px-gutter py-4">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps bg-tertiary/10 text-tertiary border border-tertiary/20">AT RISK</span>
+</td>
+<td class="px-gutter py-4 text-on-surface font-code-md">76%</td>
+<td class="px-gutter py-4 text-right">
+<button class="bg-transparent border border-outline text-on-surface hover:border-secondary hover:text-secondary px-4 py-1.5 rounded text-label-caps transition-all">VIEW PROFILE</button>
+</td>
+</tr>
+<!-- Student 3 -->
+<tr class="hover:bg-surface-container-highest/30 transition-colors group">
+<td class="px-gutter py-4">
+<div class="flex flex-col">
+<span class="text-on-surface font-bold">Marcus Thorne</span>
+<span class="text-code-md font-label-caps text-secondary text-[11px]">[11220911]</span>
+</div>
+</td>
+<td class="px-gutter py-4 text-on-surface-variant font-code-md">2024-09-10</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<div class="flex-1 bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full" style="width: 100%"></div>
+</div>
+<span class="text-code-md font-label-caps text-secondary">100%</span>
+</div>
+</td>
+<td class="px-gutter py-4">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps bg-secondary/20 text-secondary border border-secondary/40">COMPLETED</span>
+</td>
+<td class="px-gutter py-4 text-on-surface font-code-md">95%</td>
+<td class="px-gutter py-4 text-right">
+<button class="bg-transparent border border-outline text-on-surface hover:border-secondary hover:text-secondary px-4 py-1.5 rounded text-label-caps transition-all">VIEW PROFILE</button>
+</td>
+</tr>
+<!-- Student 4 -->
+<tr class="hover:bg-surface-container-highest/30 transition-colors group">
+<td class="px-gutter py-4">
+<div class="flex flex-col">
+<span class="text-on-surface font-bold">Liam O'Connor</span>
+<span class="text-code-md font-label-caps text-secondary text-[11px]">[11330755]</span>
+</div>
+</td>
+<td class="px-gutter py-4 text-on-surface-variant font-code-md">2024-09-12</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<div class="flex-1 bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full" style="width: 72%"></div>
+</div>
+<span class="text-code-md font-label-caps text-secondary">72%</span>
+</div>
+</td>
+<td class="px-gutter py-4">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps bg-secondary/10 text-secondary border border-secondary/20">ACTIVE</span>
+</td>
+<td class="px-gutter py-4 text-on-surface font-code-md">92%</td>
+<td class="px-gutter py-4 text-right">
+<button class="bg-transparent border border-outline text-on-surface hover:border-secondary hover:text-secondary px-4 py-1.5 rounded text-label-caps transition-all">VIEW PROFILE</button>
+</td>
+</tr>
+<!-- Student 5 -->
+<tr class="hover:bg-surface-container-highest/30 transition-colors group">
+<td class="px-gutter py-4">
+<div class="flex flex-col">
+<span class="text-on-surface font-bold">Sarah Jenkins</span>
+<span class="text-code-md font-label-caps text-secondary text-[11px]">[11440822]</span>
+</div>
+</td>
+<td class="px-gutter py-4 text-on-surface-variant font-code-md">2024-09-13</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<div class="flex-1 bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full" style="width: 65%"></div>
+</div>
+<span class="text-code-md font-label-caps text-secondary">65%</span>
+</div>
+</td>
+<td class="px-gutter py-4">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-caps bg-secondary/10 text-secondary border border-secondary/20">ACTIVE</span>
+</td>
+<td class="px-gutter py-4 text-on-surface font-code-md">89%</td>
+<td class="px-gutter py-4 text-right">
+<button class="bg-transparent border border-outline text-on-surface hover:border-secondary hover:text-secondary px-4 py-1.5 rounded text-label-caps transition-all">VIEW PROFILE</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-gutter py-3 bg-surface-container-highest/20 border-t border-outline-variant flex justify-between items-center">
+<span class="text-body-sm text-on-surface-variant">Showing 1-5 of 128 students</span>
+<div class="flex gap-1">
+<button class="w-8 h-8 flex items-center justify-center border border-outline text-on-surface-variant hover:text-secondary rounded"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center bg-secondary text-on-secondary rounded font-label-caps text-[11px]">1</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline text-on-surface-variant hover:text-secondary rounded font-label-caps text-[11px]">2</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline text-on-surface-variant hover:text-secondary rounded font-label-caps text-[11px]">3</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline text-on-surface-variant hover:text-secondary rounded"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+<!-- Contextual Insight / Logic Visualizer -->
+<div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<div class="lg:col-span-2 bg-surface-container-low border border-outline-variant p-margin-mobile">
+<div class="flex items-center justify-between mb-4">
+<h4 class="text-label-caps font-label-caps text-on-surface">AUTHORIZATION PATH ANALYTICS</h4>
+<span class="material-symbols-outlined text-secondary text-[20px]">hub</span>
+</div>
+<div class="p-4 bg-surface-container-lowest border border-outline-variant font-code-md text-code-md text-on-secondary-container/80 space-y-2">
+<div class="flex gap-2">
+<span class="text-secondary opacity-50">01</span>
+<span class="text-on-surface">REQUEST:</span> <span class="text-secondary">enrollment_verification(stu_11330842)</span>
+</div>
+<div class="flex gap-2 pl-4">
+<span class="text-secondary opacity-50">02</span>
+<span class="text-on-surface-variant">ASSERT: RELATIONSHIP(stu_11330842, CS-401, ENROLLED)</span>
+</div>
+<div class="flex gap-2 pl-4">
+<span class="text-secondary opacity-50">03</span>
+<span class="text-on-surface-variant">ASSERT: CONTEXT(current_time, SEMESTER_WINDOW_OPEN)</span>
+</div>
+<div class="flex gap-2 pl-4">
+<span class="text-secondary opacity-50">04</span>
+<span class="text-on-surface-variant">CHECK: SOD_CONFLICT(ACCESS_CONTROL_LEVEL_4, NO_CONFLICT)</span>
+</div>
+<div class="flex gap-2">
+<span class="text-secondary opacity-50">05</span>
+<span class="text-secondary font-bold">RESULT: PERMIT [AUTH_TOKEN: 8xFD92...]</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-margin-mobile flex flex-col justify-center items-center text-center">
+<div class="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-secondary text-[32px]">shield_lock</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-1">Compliance Audit</h4>
+<p class="text-body-sm text-on-surface-variant mb-6 px-4">All enrollments for CS-401 are verified against RASAC Level 4 Security Policies.</p>
+<button class="w-full py-2 border border-secondary text-secondary font-label-caps text-label-caps hover:bg-secondary hover:text-on-secondary transition-colors">RUN SECURITY AUDIT</button>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple micro-interaction for table rows
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.querySelector('button').classList.replace('border-outline', 'border-secondary');
+            });
+            row.addEventListener('mouseleave', () => {
+                row.querySelector('button').classList.replace('border-secondary', 'border-outline');
+            });
+        });
+    </script>
+</body></html>

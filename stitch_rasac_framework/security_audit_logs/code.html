@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RASAC Framework | Audit Logs</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #031427; }
+        ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #45f0cf; }
+        
+        .access-row:hover { background-color: rgba(38, 54, 74, 0.5); }
+        .json-reveal { transition: max-height 0.3s ease-out; overflow: hidden; }
+        .json-reveal.collapsed { max-height: 0; }
+        .json-reveal.expanded { max-height: 500px; }
+        
+        .electric-glow { box-shadow: 0 0 15px -3px rgba(69, 240, 207, 0.3); }
+        .border-gradient-active { border-top: 1px solid #45f0cf; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#b87500",
+                        "surface-container-high": "#1b2b3f",
+                        "primary-fixed-dim": "#bbc7df",
+                        "error": "#ffb4ab",
+                        "surface-container": "#102034",
+                        "outline": "#8f9097",
+                        "outline-variant": "#44474c",
+                        "surface-container-lowest": "#000f21",
+                        "secondary": "#45f0cf",
+                        "inverse-surface": "#d3e4fe",
+                        "on-primary-container": "#78849a",
+                        "on-error": "#690005",
+                        "inverse-primary": "#535f74",
+                        "surface": "#031427",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "background": "#031427",
+                        "on-primary-fixed": "#101c2e",
+                        "surface-tint": "#bbc7df",
+                        "on-surface-variant": "#c5c6cd",
+                        "on-tertiary": "#472a00",
+                        "surface-container-low": "#0b1c30",
+                        "primary-fixed": "#d7e3fc",
+                        "error-container": "#93000a",
+                        "primary": "#bbc7df",
+                        "secondary-container": "#00d3b3",
+                        "inverse-on-surface": "#213145",
+                        "tertiary-container": "#291700",
+                        "secondary-fixed-dim": "#27dfbe",
+                        "on-background": "#d3e4fe",
+                        "on-secondary-fixed-variant": "#005143",
+                        "surface-variant": "#26364a",
+                        "tertiary": "#ffb95f",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-secondary-container": "#005547",
+                        "surface-container-highest": "#26364a",
+                        "primary-container": "#0f1b2d",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#55fcda",
+                        "surface-bright": "#2a3a4f",
+                        "on-surface": "#d3e4fe",
+                        "on-primary-fixed-variant": "#3c475b",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-primary": "#253144",
+                        "surface-dim": "#031427",
+                        "on-secondary-fixed": "#00201a",
+                        "on-secondary": "#00382e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "density-comfortable": "16px",
+                        "margin-desktop": "32px",
+                        "density-compact": "8px",
+                        "margin-mobile": "16px",
+                        "container-max": "1440px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["DM Sans"],
+                        "code-md": ["JetBrains Mono"],
+                        "body-lg": ["DM Sans"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-md": ["DM Sans"],
+                        "headline-lg": ["DM Sans"],
+                        "headline-md": ["DM Sans"],
+                        "body-sm": ["DM Sans"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "450"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md selection:bg-secondary selection:text-on-secondary">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-16 sticky top-0 z-50 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">RASAC Framework</h1>
+<div class="hidden md:flex gap-6">
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-colors font-body-md" href="#">Documentation</a>
+<a class="text-primary font-bold border-b-2 border-primary font-body-md" href="#">Audit Logs</a>
+<a class="text-on-surface-variant hover:bg-surface-container-highest transition-colors font-body-md" href="#">Security Console</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer hover:opacity-80 transition-opacity">notifications</span>
+<span class="material-symbols-outlined text-primary cursor-pointer hover:opacity-80 transition-opacity">history</span>
+<div class="flex items-center gap-2 px-2 py-1 rounded border border-outline-variant bg-surface-container-low cursor-pointer">
+<span class="material-symbols-outlined text-secondary">account_circle</span>
+<span class="font-label-caps text-label-caps uppercase text-on-surface">Admin_Root</span>
+</div>
+</div>
+</header>
+<div class="flex min-h-[calc(100vh-64px)]">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full py-4 bg-surface-container-low border-r border-outline-variant fixed left-0 top-16 w-[240px]">
+<div class="flex flex-col flex-grow px-2 gap-1">
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 rounded cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 rounded cursor-pointer">
+<span class="material-symbols-outlined">security</span>
+<span class="font-label-caps text-label-caps">Access Control</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-secondary bg-surface-container-highest border-r-2 border-secondary transition-all duration-200 rounded cursor-pointer">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="font-label-caps text-label-caps">Audit Logs</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 rounded cursor-pointer">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-label-caps text-label-caps">Academic Periods</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 rounded cursor-pointer">
+<span class="material-symbols-outlined">rule</span>
+<span class="font-label-caps text-label-caps">Policy Engine</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 rounded cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">System Settings</span>
+</div>
+</div>
+<div class="mt-auto px-2 pt-4 border-t border-outline-variant">
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 rounded cursor-pointer">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-caps text-label-caps">Documentation</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all duration-200 rounded cursor-pointer">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-grow md:ml-[240px] p-6 lg:p-8 bg-surface space-y-6">
+<!-- Summary Bar -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-low border border-outline-variant p-4 flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Total Requests (24h)</span>
+<span class="font-headline-md text-headline-md text-primary">1,204,551</span>
+<div class="h-1 bg-surface-container-highest mt-2 overflow-hidden">
+<div class="h-full bg-secondary w-3/4"></div>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-4 flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Access Granted</span>
+<span class="font-headline-md text-headline-md text-secondary">98.2%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">1,182,869 instances</span>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-4 flex flex-col gap-1 border-t-2 border-t-error">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Policy Denials</span>
+<span class="font-headline-md text-headline-md text-error">21,682</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Suspicious patterns detected</span>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-4 flex flex-col gap-1 border-t-2 border-t-tertiary">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">SoD Conflicts</span>
+<span class="font-headline-md text-headline-md text-tertiary">154</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Manual review required</span>
+</div>
+</section>
+<!-- Filter Controls -->
+<section class="bg-surface-container border border-outline-variant p-4">
+<div class="flex flex-wrap items-end gap-4">
+<div class="flex flex-col gap-1 flex-grow min-w-[200px]">
+<label class="font-label-caps text-label-caps text-on-surface-variant">User Search</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-sm focus:border-secondary focus:ring-1 focus:ring-secondary outline-none" placeholder="Search Principal/UUID..." type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-1 w-40">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Outcome</label>
+<select class="bg-surface border border-outline-variant rounded px-3 py-2 text-body-sm focus:border-secondary outline-none appearance-none">
+<option>All Events</option>
+<option>Granted</option>
+<option>Denied (Role)</option>
+<option>Denied (Context)</option>
+</select>
+</div>
+<div class="flex flex-col gap-1 w-48">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Deny Layer</label>
+<select class="bg-surface border border-outline-variant rounded px-3 py-2 text-body-sm focus:border-secondary outline-none appearance-none">
+<option>All Layers</option>
+<option>Role</option>
+<option>Relationship</option>
+<option>Context</option>
+<option>SoD</option>
+</select>
+</div>
+<div class="flex gap-2">
+<button class="bg-secondary text-on-secondary px-6 py-2 rounded font-label-caps text-label-caps uppercase hover:opacity-90 transition-opacity">Apply Filters</button>
+<button class="bg-surface-container-high border border-outline-variant text-on-surface px-6 py-2 rounded font-label-caps text-label-caps uppercase hover:bg-surface-container-highest transition-colors">Export Logs</button>
+</div>
+</div>
+</section>
+<!-- Data Table -->
+<section class="bg-surface-container border border-outline-variant overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high border-b border-outline-variant">
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Timestamp</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Principal ID</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Resource</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Outcome</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Deny Layer</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-code-md text-code-md divide-y divide-outline-variant">
+<!-- Row 1: Granted -->
+<tr class="access-row cursor-pointer group" onclick="toggleDetails('row-1')">
+<td class="px-4 py-3 whitespace-nowrap text-on-surface-variant">2023-11-20T14:22:01.442Z</td>
+<td class="px-4 py-3 text-secondary font-bold">USR-8829-AF</td>
+<td class="px-4 py-3">academic_records_v2/restricted</td>
+<td class="px-4 py-3">
+<span class="bg-[#00382e] text-[#45f0cf] px-2 py-0.5 rounded-sm text-[10px] uppercase font-bold border border-[#005547]">Granted</span>
+</td>
+<td class="px-4 py-3 text-on-surface-variant">—</td>
+<td class="px-4 py-3 text-right">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors" id="icon-row-1">expand_more</span>
+</td>
+</tr>
+<tr class="json-reveal collapsed bg-surface-container-lowest" id="row-1-details">
+<td class="p-0" colspan="6">
+<div class="px-8 py-6 border-l-4 border-secondary space-y-4">
+<div class="flex justify-between items-start">
+<h4 class="font-label-caps text-label-caps text-secondary uppercase">Authorization Trace</h4>
+<button class="text-on-surface-variant hover:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+<span class="text-[10px]">COPY JSON</span>
+</button>
+</div>
+<pre class="bg-[#010a15] p-4 rounded text-secondary-fixed-dim overflow-auto text-xs leading-relaxed">
+{
+  "request_id": "req-99120-xk2",
+  "principal": { "id": "USR-8829-AF", "roles": ["Registrar", "Staff"], "trust_score": 0.98 },
+  "action": "READ",
+  "resource": "academic_records_v2",
+  "decision": "PERMIT",
+  "obligations": ["PII_REDACTION_LEVEL_1"],
+  "evaluation_time_ms": 14.2,
+  "context": { "ip": "10.42.1.22", "location": "On-Campus", "is_mfa_active": true }
+}</pre>
+</div>
+</td>
+</tr>
+<!-- Row 2: Denied (Role) -->
+<tr class="access-row cursor-pointer group" onclick="toggleDetails('row-2')">
+<td class="px-4 py-3 whitespace-nowrap text-on-surface-variant">2023-11-20T14:21:55.102Z</td>
+<td class="px-4 py-3 text-error font-bold">USR-4410-KL</td>
+<td class="px-4 py-3">financial_ledger_root/core</td>
+<td class="px-4 py-3">
+<span class="bg-[#470002] text-[#ffb4ab] px-2 py-0.5 rounded-sm text-[10px] uppercase font-bold border border-[#93000a]">Denied</span>
+</td>
+<td class="px-4 py-3 text-error">Role Deficiency</td>
+<td class="px-4 py-3 text-right">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-error transition-colors" id="icon-row-2">expand_more</span>
+</td>
+</tr>
+<tr class="json-reveal collapsed bg-surface-container-lowest" id="row-2-details">
+<td class="p-0" colspan="6">
+<div class="px-8 py-6 border-l-4 border-error space-y-4">
+<div class="flex justify-between items-start">
+<h4 class="font-label-caps text-label-caps text-error uppercase">Denial Root Cause Analysis</h4>
+<button class="text-on-surface-variant hover:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+<span class="text-[10px]">COPY JSON</span>
+</button>
+</div>
+<pre class="bg-[#010a15] p-4 rounded text-error overflow-auto text-xs leading-relaxed">
+{
+  "request_id": "req-99119-xm9",
+  "decision": "DENY",
+  "reason_code": "INSUFFICIENT_PRIVILEGES",
+  "failed_assertion": "Principal.Roles CONTAINS 'FinancialController'",
+  "active_roles": ["StudentAssistant"],
+  "security_alert": {
+    "severity": "LOW",
+    "description": "Attempted access to restricted financial data by non-privileged role."
+  }
+}</pre>
+</div>
+</td>
+</tr>
+<!-- Row 3: Denied (SoD) -->
+<tr class="access-row cursor-pointer group" onclick="toggleDetails('row-3')">
+<td class="px-4 py-3 whitespace-nowrap text-on-surface-variant">2023-11-20T14:18:22.001Z</td>
+<td class="px-4 py-3 text-tertiary font-bold">USR-1102-ZX</td>
+<td class="px-4 py-3">scholarship_disbursement/approve</td>
+<td class="px-4 py-3">
+<span class="bg-[#291700] text-[#ffb95f] px-2 py-0.5 rounded-sm text-[10px] uppercase font-bold border border-[#653e00]">Conflict</span>
+</td>
+<td class="px-4 py-3 text-tertiary">SoD Violation</td>
+<td class="px-4 py-3 text-right">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-tertiary transition-colors" id="icon-row-3">expand_more</span>
+</td>
+</tr>
+<tr class="json-reveal collapsed bg-surface-container-lowest" id="row-3-details">
+<td class="p-0" colspan="6">
+<div class="px-8 py-6 border-l-4 border-tertiary space-y-4">
+<div class="flex justify-between items-start">
+<h4 class="font-label-caps text-label-caps text-tertiary uppercase">Segregation of Duty Violation</h4>
+<button class="text-on-surface-variant hover:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+<span class="text-[10px]">COPY JSON</span>
+</button>
+</div>
+<pre class="bg-[#010a15] p-4 rounded text-tertiary overflow-auto text-xs leading-relaxed">
+{
+  "request_id": "req-99105-ff3",
+  "decision": "DENY",
+  "policy_violation": "SOD_RULE_044",
+  "rule_description": "User cannot initiate and approve the same disbursement transaction.",
+  "history": {
+    "action": "INITIATE",
+    "entity_id": "TRANS-X99",
+    "timestamp": "2023-11-20T11:05:00Z"
+  }
+}</pre>
+</div>
+</td>
+</tr>
+<!-- Row 4: Denied (Context) -->
+<tr class="access-row cursor-pointer group" onclick="toggleDetails('row-4')">
+<td class="px-4 py-3 whitespace-nowrap text-on-surface-variant">2023-11-20T14:15:09.332Z</td>
+<td class="px-4 py-3 text-on-surface font-bold">USR-5592-BB</td>
+<td class="px-4 py-3">system/core_kernel/config</td>
+<td class="px-4 py-3">
+<span class="bg-[#291700] text-[#ffb95f] px-2 py-0.5 rounded-sm text-[10px] uppercase font-bold border border-[#653e00]">Denied</span>
+</td>
+<td class="px-4 py-3 text-on-tertiary-container">Context/Time</td>
+<td class="px-4 py-3 text-right">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" id="icon-row-4">expand_more</span>
+</td>
+</tr>
+<tr class="json-reveal collapsed bg-surface-container-lowest" id="row-4-details">
+<td class="p-0" colspan="6">
+<div class="px-8 py-6 border-l-4 border-outline space-y-4">
+<div class="flex justify-between items-start">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase">Contextual Rejection Trace</h4>
+<button class="text-on-surface-variant hover:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+<span class="text-[10px]">COPY JSON</span>
+</button>
+</div>
+<pre class="bg-[#010a15] p-4 rounded text-on-surface-variant overflow-auto text-xs leading-relaxed">
+{
+  "request_id": "req-99088-ab1",
+  "decision": "DENY",
+  "reason": "OFF_HOURS_RESTRICTION",
+  "allowed_window": "08:00-17:00 EST",
+  "current_time": "14:15:09 EST",
+  "note": "Production kernel modifications require 'Emergency Maintenance' context outside of standard business hours."
+}</pre>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="flex items-center justify-between px-4 py-3 bg-surface-container-high border-t border-outline-variant">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Showing 4 of 1,204,551 records</span>
+<div class="flex gap-1">
+<button class="p-1 hover:bg-surface-container-highest rounded transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="px-3 py-1 bg-secondary text-on-secondary rounded text-body-sm font-bold">1</button>
+<button class="px-3 py-1 hover:bg-surface-container-highest rounded text-body-sm transition-colors">2</button>
+<button class="px-3 py-1 hover:bg-surface-container-highest rounded text-body-sm transition-colors">3</button>
+<span class="px-2">...</span>
+<button class="px-3 py-1 hover:bg-surface-container-highest rounded text-body-sm transition-colors">5000</button>
+<button class="p-1 hover:bg-surface-container-highest rounded transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Floating Action: Quick Audit Export -->
+<button class="fixed bottom-8 right-8 bg-secondary text-on-secondary p-4 rounded-full electric-glow hover:scale-105 transition-transform flex items-center gap-2 group z-50">
+<span class="material-symbols-outlined" data-weight="fill">download</span>
+<span class="hidden group-hover:inline font-label-caps text-label-caps uppercase pr-2">Instant Export</span>
+</button>
+<script>
+        function toggleDetails(rowId) {
+            const detailRow = document.getElementById(rowId + '-details');
+            const icon = document.getElementById('icon-' + rowId);
+            
+            if (detailRow.classList.contains('collapsed')) {
+                detailRow.classList.remove('collapsed');
+                detailRow.classList.add('expanded');
+                icon.style.transform = 'rotate(180deg)';
+                icon.classList.add('text-secondary');
+            } else {
+                detailRow.classList.add('collapsed');
+                detailRow.classList.remove('expanded');
+                icon.style.transform = 'rotate(0deg)';
+                icon.classList.remove('text-secondary');
+            }
+        }
+
+        // Atmospheric Micro-interaction: Periodic "pulse" on stats
+        setInterval(() => {
+            const badges = document.querySelectorAll('.font-headline-md');
+            const target = badges[Math.floor(Math.random() * badges.length)];
+            target.style.opacity = '0.7';
+            setTimeout(() => target.style.opacity = '1', 150);
+        }, 8000);
+    </script>
+</body></html>

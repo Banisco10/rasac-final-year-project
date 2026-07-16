@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lecturer Profile | Dr. Aris Thorne</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#44474c",
+                        "surface-container-low": "#0b1c30",
+                        "primary-fixed-dim": "#bbc7df",
+                        "primary-fixed": "#d7e3fc",
+                        "error": "#ffb4ab",
+                        "surface-dim": "#031427",
+                        "on-secondary-fixed": "#00201a",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-tertiary-container": "#b87500",
+                        "on-primary": "#253144",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#000f21",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-surface": "#d3e4fe",
+                        "inverse-on-surface": "#213145",
+                        "outline": "#8f9097",
+                        "on-surface-variant": "#c5c6cd",
+                        "surface-container-high": "#1b2b3f",
+                        "secondary-fixed": "#55fcda",
+                        "on-primary-fixed-variant": "#3c475b",
+                        "inverse-surface": "#d3e4fe",
+                        "on-secondary-fixed-variant": "#005143",
+                        "primary": "#bbc7df",
+                        "secondary-container": "#00d3b3",
+                        "tertiary-container": "#291700",
+                        "surface-container": "#102034",
+                        "on-background": "#d3e4fe",
+                        "error-container": "#93000a",
+                        "surface-bright": "#2a3a4f",
+                        "secondary-fixed-dim": "#27dfbe",
+                        "primary-container": "#0f1b2d",
+                        "surface-tint": "#bbc7df",
+                        "inverse-primary": "#535f74",
+                        "background": "#031427",
+                        "tertiary": "#ffb95f",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-primary-container": "#78849a",
+                        "secondary": "#45f0cf",
+                        "on-primary-fixed": "#101c2e",
+                        "surface-variant": "#26364a",
+                        "surface": "#031427",
+                        "on-secondary": "#00382e",
+                        "on-tertiary": "#472a00",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#005547",
+                        "surface-container-highest": "#26364a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "margin-desktop": "32px",
+                        "density-comfortable": "16px",
+                        "margin-mobile": "16px",
+                        "density-compact": "8px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["DM Sans"],
+                        "body-md": ["DM Sans"],
+                        "headline-sm": ["DM Sans"],
+                        "code-md": ["JetBrains Mono"],
+                        "headline-md": ["DM Sans"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-lg": ["DM Sans"],
+                        "body-sm": ["DM Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "450"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #031427;
+            color: #d3e4fe;
+            font-family: 'DM Sans', sans-serif;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #000f21;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid #1e293b;
+        }
+        .teal-glow-focus:focus-within {
+            box-shadow: 0 0 0 2px rgba(69, 240, 207, 0.2);
+            border-color: #45f0cf;
+        }
+    </style>
+</head>
+<body class="dark selection:bg-secondary/30">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full w-[240px] bg-surface-container border-r border-outline-variant flex flex-col z-[60] hidden md:flex">
+<div class="px-gutter py-density-comfortable flex flex-col gap-2">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 bg-secondary rounded flex items-center justify-center text-on-secondary">
+<span class="material-symbols-outlined text-headline-sm" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-secondary">RASAC Admin</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Higher Ed Security</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all duration-150 rounded" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all duration-150 rounded" href="#">
+<span class="material-symbols-outlined">security</span> Access Control
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 font-label-caps text-label-caps text-secondary bg-surface-container-high border-r-2 border-secondary transition-all duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">school</span> Courses
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all duration-150 rounded" href="#">
+<span class="material-symbols-outlined">list_alt</span> Audit Logs
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all duration-150 rounded" href="#">
+<span class="material-symbols-outlined">settings_applications</span> System Settings
+                </a>
+</nav>
+</div>
+<div class="mt-auto p-gutter flex flex-col gap-4">
+<button class="w-full bg-error-container text-on-error-container font-label-caps text-label-caps py-3 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">lock_reset</span> Emergency Lockout
+            </button>
+<div class="border-t border-outline-variant pt-4">
+<a class="flex items-center gap-3 px-4 py-2 font-label-caps text-label-caps text-on-surface-variant hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined">help</span> Documentation
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 font-label-caps text-label-caps text-on-surface-variant hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined">contact_support</span> Support
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-[240px] min-h-screen flex flex-col relative">
+<!-- Top Navigation Bar -->
+<header class="h-14 w-full bg-surface border-b border-outline-variant flex justify-between items-center px-gutter z-50 sticky top-0">
+<div class="flex items-center gap-4">
+<div class="md:hidden">
+<span class="material-symbols-outlined text-on-surface">menu</span>
+</div>
+<div class="hidden md:flex items-center bg-surface-container-low border border-outline-variant rounded px-3 py-1 gap-2 w-64 teal-glow-focus">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm font-body-sm text-on-surface w-full" placeholder="Global search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-2">
+<button class="p-2 text-on-surface-variant hover:text-secondary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-secondary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="flex items-center gap-3 ml-2 pl-4 border-l border-outline-variant">
+<div class="text-right hidden sm:block">
+<p class="font-label-caps text-label-caps text-on-surface leading-none">Admin Terminal</p>
+<p class="font-label-caps text-[10px] text-secondary leading-none mt-1">SUPERUSER</p>
+</div>
+<img alt="Administrator profile" class="w-8 h-8 rounded bg-surface-container-highest border border-outline-variant" data-alt="A professional studio portrait of a technology administrator for a university cybersecurity department. The man has a focused, intelligent expression with short-trimmed hair and professional attire. The lighting is dramatic and cool-toned, with deep navy and electric teal shadows reflecting off his features. The background is a blurred, high-tech server room with glowing blue LED indicators." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhYUOoSDVlZ5mxmlmFRv99kgm3FqpJcCj7fktKT3scKsvL-sgo3BSk5pz7i_FbVOX5KV6f9F2CaW-OmoikOEmrVsKWwM6cKHSlqhf9r_NkZ8gOjcJp8GAAhCOdnlS-7gmoXHR2_bfUL-4QW8VsJxTlPs2v5akGRGV-fZcn5Ct1EOQ-vv7BppuXKziK03Bb_F8sE2P7NirCVgZtwYdAHl6Wh5WRXEiWv9d-Kx4u1bboSga0Y2InBR80Y7p7ft-OYnMlzfnV4_W4EjBv"/>
+</div>
+</div>
+</header>
+<!-- Profile Page Content -->
+<div class="p-8 max-w-[1200px] w-full mx-auto animate-in fade-in duration-700">
+<!-- Hero Header -->
+<section class="flex flex-col md:flex-row gap-8 items-start mb-12">
+<div class="relative group">
+<div class="absolute -inset-1 bg-gradient-to-tr from-secondary to-primary opacity-20 group-hover:opacity-40 transition-opacity blur rounded-lg"></div>
+<img alt="Dr. Aris Thorne" class="w-48 h-48 md:w-56 md:h-56 rounded-lg object-cover border border-outline-variant relative z-10" data-alt="A high-definition professional headshot of Dr. Aris Thorne, a senior academic lecturer in his late 40s with a sharp, intellectual appearance. He wears a dark charcoal blazer over a crisp white shirt. The aesthetic is industrial and minimalist, set against a dark navy blue background with subtle geometric glass patterns. The lighting is cinematic, utilizing soft-box white light with secondary teal accents, highlighting his features with precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAX6OnTJv-AVC9Dda_EN1JoOn7T5YZPqSOapOT8UbDm1YpteBH_kEmK7gU4pOHCo5qbLa05s2EVYVpT8OqQ7BUk6hfLcvTqxVY86QWkwN0i3oMSsnIIGN85HkXHJkV0Cc0Bv4ZApi1-Q4UeYuBKdD_jl5ZdRv-v6kcBQqsX50mvk9Us1c4AJEziJdstruiiLuX-Kq3qF7PFIDUAaJBAN9JA2EKyGd8cnW4hkNZAWnTrY-6OLCgYmMWij_JxW5NkyvyHxpC6CcwoKGLE"/>
+</div>
+<div class="flex-1 space-y-4 pt-4">
+<div class="flex flex-wrap items-center gap-3">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Dr. Aris Thorne</h2>
+<span class="bg-secondary/10 text-secondary border border-secondary/20 px-3 py-1 font-label-caps text-[10px] tracking-widest rounded-full">SENIOR LECTURER</span>
+</div>
+<p class="font-headline-sm text-headline-sm text-on-primary-container">Senior Lecturer &amp; Security Researcher</p>
+<div class="flex gap-4 pt-4">
+<button class="bg-secondary text-on-secondary px-6 py-2.5 rounded font-label-caps text-label-caps flex items-center gap-2 hover:shadow-[0_0_20px_rgba(69,240,207,0.3)] transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px]">mail</span> Email Lecturer
+                        </button>
+<button class="border border-outline-variant bg-surface-container-high text-on-surface px-6 py-2.5 rounded font-label-caps text-label-caps flex items-center gap-2 hover:border-secondary transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span> Schedule Consultation
+                        </button>
+</div>
+</div>
+</section>
+<!-- Bento Layout Content -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- About Section -->
+<div class="md:col-span-8 space-y-6">
+<div class="glass-panel p-6 rounded-lg border-t-2 border-t-secondary/50">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-secondary">info</span>
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-[0.2em]">Biography</h3>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                            Dr. Aris Thorne is a leading expert in Relationship-Aware Access Control and Cryptography. With over 15 years of experience in higher education security, he oversees the Advanced Cryptography course and leads the RASAC implementation initiative.
+                        </p>
+</div>
+<!-- Recent System Activity -->
+<div class="glass-panel p-6 rounded-lg">
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">history</span>
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-[0.2em]">Recent System Activity</h3>
+</div>
+<span class="font-code-md text-code-md text-on-surface-variant opacity-60">LOG_v4.2</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 border border-outline-variant bg-surface-container-lowest rounded hover:border-secondary/30 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded flex items-center justify-center bg-secondary/10 text-secondary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">key</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Access Granted: Cryptography Lab Alpha</p>
+<p class="font-code-md text-[11px] text-on-surface-variant">RELATIONSHIP: Course_Lead | CONTEXT: Active_Semester</p>
+</div>
+</div>
+<span class="font-code-md text-[11px] text-on-surface-variant">2m ago</span>
+</div>
+<div class="flex items-center justify-between p-3 border border-outline-variant bg-surface-container-lowest rounded hover:border-secondary/30 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded flex items-center justify-center bg-secondary/10 text-secondary">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Policy Update: RASAC SoD Ruleset</p>
+<p class="font-code-md text-[11px] text-on-surface-variant">AUTHORITY: Role_Senior_Lecturer | SYSTEM: Global</p>
+</div>
+</div>
+<span class="font-code-md text-[11px] text-on-surface-variant">1h ago</span>
+</div>
+<div class="flex items-center justify-between p-3 border border-outline-variant bg-surface-container-lowest rounded hover:border-secondary/30 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded flex items-center justify-center bg-secondary/10 text-secondary">
+<span class="material-symbols-outlined text-[18px]">folder_shared</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Accessed Record: Student_ID_7721</p>
+<p class="font-code-md text-[11px] text-on-surface-variant">PURPOSE: Academic_Audit | STATUS: Secure_Read</p>
+</div>
+</div>
+<span class="font-code-md text-[11px] text-on-surface-variant">4h ago</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Cards -->
+<div class="md:col-span-4 space-y-6">
+<!-- Academic Identity -->
+<div class="glass-panel p-6 rounded-lg border-l-4 border-l-secondary">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary">badge</span>
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-[0.2em]">Academic Identity</h3>
+</div>
+<div class="space-y-4">
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-1">Department</span>
+<span class="font-body-md text-body-md text-on-surface">Computer Science</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-1">Employee ID</span>
+<span class="font-code-md text-code-md text-secondary">LEC-001</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-1">Clearance Level</span>
+<div class="flex items-center gap-2">
+<div class="flex gap-0.5">
+<div class="w-4 h-1.5 bg-secondary rounded-full"></div>
+<div class="w-4 h-1.5 bg-secondary rounded-full"></div>
+<div class="w-4 h-1.5 bg-secondary rounded-full"></div>
+<div class="w-4 h-1.5 bg-outline-variant rounded-full"></div>
+<div class="w-4 h-1.5 bg-outline-variant rounded-full"></div>
+</div>
+<span class="font-code-md text-code-md text-on-surface">3 of 5</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Contact Information -->
+<div class="glass-panel p-6 rounded-lg">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary">contact_mail</span>
+<h3 class="font-label-caps text-label-caps text-secondary uppercase tracking-[0.2em]">Contact Information</h3>
+</div>
+<div class="space-y-5">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">alternate_email</span>
+<div>
+<p class="font-label-caps text-[10px] text-on-surface-variant uppercase mb-1">Email</p>
+<p class="font-body-sm text-body-sm text-on-surface break-all">dr.aris.thorne@rasac.edu</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">location_on</span>
+<div>
+<p class="font-label-caps text-[10px] text-on-surface-variant uppercase mb-1">Office</p>
+<p class="font-body-sm text-body-sm text-on-surface">Engineering Block, Room 4B</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">schedule</span>
+<div>
+<p class="font-label-caps text-[10px] text-on-surface-variant uppercase mb-1">Consultation Hours</p>
+<p class="font-body-sm text-body-sm text-on-surface">Mon/Wed 14:00 - 16:00</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Courses Managed -->
+<div class="bg-surface-container-highest/30 p-6 rounded-lg border border-outline-variant relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-5">
+<span class="material-symbols-outlined text-[120px]">school</span>
+</div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase tracking-widest">Active Courses</h3>
+<div class="space-y-2 relative z-10">
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low border border-outline-variant">
+<span class="font-body-sm text-body-sm">Adv. Cryptography</span>
+<span class="font-code-md text-[10px] px-1.5 py-0.5 bg-outline-variant/30 rounded">CS-502</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low border border-outline-variant opacity-60">
+<span class="font-body-sm text-body-sm">Access Control Systems</span>
+<span class="font-code-md text-[10px] px-1.5 py-0.5 bg-outline-variant/30 rounded">CS-408</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Decor -->
+<footer class="mt-auto py-8 px-8 border-t border-outline-variant/30">
+<div class="flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="font-code-md text-[11px] text-on-surface-variant/50">RASAC ENGINE v2.8.1 // ENCRYPTED SESSION</p>
+<div class="flex gap-6">
+<span class="font-label-caps text-[10px] text-on-surface-variant hover:text-secondary cursor-pointer transition-colors">PRIVACY POLICY</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant hover:text-secondary cursor-pointer transition-colors">SECURITY AUDIT</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant hover:text-secondary cursor-pointer transition-colors">SYSTEM STATUS</span>
+</div>
+</div>
+</footer>
+</main>
+<!-- Background Elements -->
+<div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+<div class="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]"></div>
+<!-- Matrix-style scanlines -->
+<div class="absolute inset-0 opacity-[0.02]" style="background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%;"></div>
+</div>
+<script>
+        // Simple micro-interaction for cards
+        document.querySelectorAll('.glass-panel').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+                card.style.transition = 'all 0.3s ease';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0px)';
+            });
+        });
+
+        // Search highlight effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('border-secondary');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('border-secondary');
+        });
+    </script>
+</body></html>
