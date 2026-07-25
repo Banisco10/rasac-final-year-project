@@ -10,6 +10,7 @@ export interface AppEnv {
 }
 
 const rawEnv = process.env;
+console.log("DATABASE_URL FROM VERCEL:", rawEnv.DATABASE_URL);
 
 const accessTokenTtl = rawEnv.ACCESS_TOKEN_TTL ?? rawEnv.JWT_EXPIRES_IN ?? '15m';
 
