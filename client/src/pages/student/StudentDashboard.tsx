@@ -357,8 +357,8 @@ export function StudentDashboardScreen({
       footerActionClassName="deploy-btn"
       footerActionLabel="Deploy Policy"
       footerActionIcon={<Monitor size={16} />}
-      showFooterUser={false}
-      showSignOut={false}
+      showFooterUser={true}
+      showSignOut={true}
       topIcons={
         <>
           <button className="icon-chip" aria-label="Notifications" onClick={() => openNotice('Notifications', `Enrolled in ${enrollments.length} courses.`)}><Bell size={20} /></button>
