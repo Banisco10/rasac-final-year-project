@@ -181,6 +181,7 @@ export function StudentDashboardScreen({
   URL.revokeObjectURL(url);
 };
 
+  const displayName = me?.fullName ?? 'Student';
   const MAX_GPA = 4.0;
 
   const summaryMetrics = useMemo(() => [
@@ -357,8 +358,7 @@ export function StudentDashboardScreen({
       footerActionClassName="deploy-btn"
       footerActionLabel="Deploy Policy"
       footerActionIcon={<Monitor size={16} />}
-      showFooterUser={true}
-      showSignOut={true}
+      footerUser={{ name: displayName.toUpperCase(), role: me?.role ?? 'STUDENT' }}
       topIcons={
         <>
           <button className="icon-chip" aria-label="Notifications" onClick={() => openNotice('Notifications', `Enrolled in ${enrollments.length} courses.`)}><Bell size={20} /></button>
