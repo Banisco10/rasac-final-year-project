@@ -1,6 +1,6 @@
 import { ApiResponse, AcademicPeriod, AuditLog, AuthenticatedUser, Course, Enrollment, Grade, PreviousLoginInfo, PolicyConfig } from './types';
 
-type AdminStats = {
+export type AdminStats = {
   userCounts: {
     total: number;
     administrators: number;
@@ -19,6 +19,16 @@ type AdminStats = {
   gradeSubmissions: number;
   securityEvents: number;
   activePeriod: AcademicPeriod | null;
+  emergencyLockoutActive: boolean;
+};
+
+type CourseGradingProgress = {
+  courseId: number;
+  studentCount: number;
+  gradedCount: number;
+  draftCount: number;
+  submittedCount: number;
+  rejectedCount: number;
 };
 
 type UsersResponse = {
@@ -215,6 +225,9 @@ export const api = {
   async adminStats() {
     return request<AdminStats>('/admin/stats');
   },
+  async myGradingProgress() {
+  return request<CourseGradingProgress[]>('/courses/my/grading-progress');
+  },
   async gradeApprovalQueue() {
     return request<{ data: GradeQueueItem[]; total: number }>('/admin/grades/pending');
   },
@@ -292,6 +305,12 @@ export const api = {
   },
   async updateUser(id: number, payload: Record<string, unknown>) {
     return request(`/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+  async updateMyContactInfo(payload: { officeLocation: string; consultationHours: string }) {
+    return request<{ user: AuthenticatedUser }>('/users/me/contact', {
       method: 'PATCH',
       body: JSON.stringify(payload),
     });

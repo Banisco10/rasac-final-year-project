@@ -134,6 +134,7 @@ export function LecturerGradingPortalScreen({
   const [previewFlowKey, setPreviewFlowKey] = useState(0);
   const [previewOutcome, setPreviewOutcome] = useState<{ granted: boolean; denyReason: string | null } | null>(null);
   const [previewAnimationDone, setPreviewAnimationDone] = useState(false);
+  
 
   const openNotice = (title: string, body: string) => {
     setNoticeTitle(title);
@@ -167,14 +168,18 @@ export function LecturerGradingPortalScreen({
         setMe(meResponse);
         setCourses(coursesResponse.data);
         setActivePeriod(activePeriodResponse);
-        setSelectedCourseId(coursesResponse.data[0]?.id ?? null);
+
+        const hashQuery = window.location.hash.split('?')[1];
+        const requestedCourseId = hashQuery ? Number(new URLSearchParams(hashQuery).get('courseId')) : null;
+        const requestedCourseExists = requestedCourseId && coursesResponse.data.some((c) => c.id === requestedCourseId);
+
+        setSelectedCourseId(requestedCourseExists ? requestedCourseId : coursesResponse.data[0]?.id ?? null);
       } catch (bootstrapError) {
         if (!cancelled) {
           setError(bootstrapError instanceof Error ? bootstrapError.message : 'Failed to load lecturer portal');
         }
       }
     };
-
     void bootstrap();
 
     return () => {

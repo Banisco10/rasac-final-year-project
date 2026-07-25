@@ -7,6 +7,7 @@ import {
   createCourse,
   getCourseStudents,
   getCourseGrades,
+  getMyGradingProgress,
 } from './courses.controller.js';
 
 const router = Router();
@@ -76,6 +77,16 @@ router.get(
     resourceId: (req) => String(req.params.id),
   }),
   getCourseGrades
+);
+
+router.get(
+  '/my/grading-progress',
+  authorize({
+    resource: 'courses',
+    action: 'read',
+    getContext: (req) => ({ timestamp: new Date(), ipAddress: req.ip ?? '' }),
+  }),
+  getMyGradingProgress
 );
 
 export default router;

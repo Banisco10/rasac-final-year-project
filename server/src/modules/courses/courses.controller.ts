@@ -12,6 +12,32 @@ import {
 } from '../../data/repository.js';
 import { sendError, sendSuccess } from '../../utils/response.js';
 
+
+export async function getMyGradingProgress(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const viewer = await userById(req.auth!.userId);
+  const role = viewer ? (await roleById(viewer.roleId))?.name : null;
+  const myCourses = await listCourses(viewer && role ? { id: viewer.id, role } : undefined);
+
+  const progress = await Promise.all(
+    myCourses.map(async (course) => {
+      const [students, grades] = await Promise.all([
+        courseStudents(course.id),
+        listGradesByCourse(course.id),
+      ]);
+      return {
+        courseId: course.id,
+        studentCount: students.length,
+        gradedCount: grades.filter((g) => g.status === 'APPROVED').length,
+        draftCount: grades.filter((g) => g.status === 'DRAFT').length,
+        submittedCount: grades.filter((g) => g.status === 'SUBMITTED').length,
+        rejectedCount: grades.filter((g) => g.status === 'REJECTED').length,
+      };
+    })
+  );
+
+  sendSuccess(res, progress);
+}
+
 export async function getCourses(req: AuthenticatedRequest, res: Response): Promise<void> {
   const viewer = await userById(req.auth!.userId);
   const role = viewer ? (await roleById(viewer.roleId))?.name : null;

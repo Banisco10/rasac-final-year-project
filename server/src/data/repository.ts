@@ -28,11 +28,13 @@ type DbUserRow = {
   password_hash: string;
   role_id: number;
   department: string | null;
+  office_location: string | null;
+  consultation_hours: string | null;
   is_active: boolean;
   failed_logins: number;
   locked_until: string | null;
   last_login: string | null;
-  last_login_ip: string | null
+  last_login_ip: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -155,6 +157,8 @@ const mapUser = (row: DbUserRow, roleName: RoleName): User => ({
   passwordHash: row.password_hash,
   roleId: row.role_id,
   department: row.department,
+  officeLocation: row.office_location,
+  consultationHours: row.consultation_hours,
   isActive: row.is_active,
   failedLogins: row.failed_logins,
   lockedUntil: toIso(row.locked_until),
@@ -326,6 +330,8 @@ export async function initializeDatabase(): Promise<void> {
       password_hash TEXT NOT NULL,
       role_id BIGINT NOT NULL REFERENCES roles(id),
       department TEXT,
+      office_location TEXT,
+      consultation_hours TEXT,
       is_active BOOLEAN NOT NULL DEFAULT TRUE,
       failed_logins INTEGER NOT NULL DEFAULT 0,
       locked_until TIMESTAMPTZ,
@@ -426,6 +432,8 @@ export async function initializeDatabase(): Promise<void> {
 
   await pool.query(`
     ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_ip TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS office_location TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS consultation_hours TEXT;
   `);
 
   await pool.query(
@@ -465,7 +473,8 @@ export async function initializeDatabase(): Promise<void> {
             ('grades:write',      'Submit Grades',       'grades',      'write',   'Submit grades'),
             ('grades:approve',    'Approve Grades',      'grades',      'approve', 'Approve grades'),
             ('audit:read',        'Read Audit Logs',     'audit',       'read',    'Read audit logs'),
-            ('periods:write',     'Manage Periods',      'periods',     'write',   'Manage periods')
+            ('periods:write',     'Manage Periods',      'periods',     'write',   'Manage periods'),
+            ('my-profile:write'), 'Edit Own Profile',    'my-profile',  'write',   'Edit own contact info')
           RETURNING id, resource, action`
         );
 
@@ -492,6 +501,9 @@ export async function initializeDatabase(): Promise<void> {
       ['STUDENT', 'enrollments', 'read'],
       ['STUDENT', 'grades', 'read'],
       ['STUDENT', 'audit', 'read'],
+      ['ADMINISTRATOR', 'my-profile', 'write'],
+      ['LECTURER', 'my-profile', 'write'],
+      ['STUDENT', 'my-profile', 'write'],
     ];
 
     for (const [roleName, resource, action] of rolePerms) {
@@ -682,6 +694,8 @@ export async function listUsers(): Promise<Array<{
   email: string;
   role: RoleName;
   department: string | null;
+  officeLocation: string | null;
+  consultationHours: string | null;
   isActive: boolean;
   studentId: string | null;
   staffId: string | null;
@@ -699,6 +713,8 @@ export async function listUsers(): Promise<Array<{
     email: row.email,
     role: row.role_name,
     department: row.department,
+    officeLocation: row.office_location,
+    consultationHours: row.consultation_hours,
     isActive: row.is_active,
     studentId: row.student_id,
     staffId: row.staff_id,
@@ -815,6 +831,8 @@ export async function updateUserById(id: number, patch: Partial<{
   firstName: string;
   lastName: string;
   department: string | null;
+  officeLocation: string | null;
+  consultationHours: string | null;
   roleId: number;
   isActive: boolean;
   lockedUntil: string | null;
@@ -829,6 +847,8 @@ export async function updateUserById(id: number, patch: Partial<{
     first_name: patch.firstName ?? current.first_name,
     last_name: patch.lastName ?? current.last_name,
     department: patch.department ?? current.department,
+    office_location: patch.officeLocation === undefined ? current.office_location : patch.officeLocation,
+    consultation_hours: patch.consultationHours === undefined ? current.consultation_hours : patch.consultationHours,
     role_id: patch.roleId ?? current.role_id,
     is_active: typeof patch.isActive === 'boolean' ? patch.isActive : current.is_active,
     locked_until: patch.lockedUntil ?? current.locked_until,
@@ -849,10 +869,12 @@ export async function updateUserById(id: number, patch: Partial<{
          last_login = $9,
          last_login_ip = $10,
          password_hash = $11,
+         office_location = $12,
+         consultation_hours = $13,
          updated_at = NOW()
      WHERE id = $1
      RETURNING *`,
-    [id, next.first_name, next.last_name, next.department, next.role_id, next.is_active, next.locked_until, next.failed_logins, next.last_login, next.last_login_ip, next.password_hash]
+    [id, next.first_name, next.last_name, next.department, next.role_id, next.is_active, next.locked_until, next.failed_logins, next.last_login, next.last_login_ip, next.password_hash, next.office_location, next.consultation_hours]
   );
   if (patch.roleId !== undefined) {
     await pool.query(
@@ -937,7 +959,7 @@ export async function createCourse(input: {
   return mapCourse(row);
 }
 
-export async function courseStudents(courseId: number): Promise<Array<{ id: number; fullName: string; email: string; role: RoleName; studentId: string | null; staffId: string | null; department: string | null; isActive: boolean }>> {
+export async function courseStudents(courseId: number): Promise<Array<{ id: number; fullName: string; email: string; role: RoleName; studentId: string | null; staffId: string | null; department: string | null; officeLocation: string | null; consultationHours: string | null; isActive: boolean }>> {
   const rows = await query<DbUserRow & { role_name: RoleName }>(
     `SELECT u.*, r.code AS role_name
      FROM enrollments e
@@ -955,6 +977,8 @@ export async function courseStudents(courseId: number): Promise<Array<{ id: numb
     studentId: row.student_id,
     staffId: row.staff_id,
     department: row.department,
+    officeLocation: row.office_location,
+    consultationHours: row.consultation_hours,
     isActive: row.is_active,
   }));
 }
@@ -1313,6 +1337,8 @@ export async function buildAuthUser(userId: number) {
     role: (await roleById(user.roleId))?.name ?? 'STUDENT',
     permissions,
     department: user.department,
+    officeLocation: user.officeLocation,
+    consultationHours: user.consultationHours,
     studentId: user.studentId,
     staffId: user.staffId,
     lastLogin: user.lastLogin,

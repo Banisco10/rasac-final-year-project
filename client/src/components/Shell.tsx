@@ -1,5 +1,5 @@
 import type React from 'react';
-import { Search, LogOut } from 'lucide-react';
+import { Search, LogOut, X } from 'lucide-react';
 import type { View, NavItem } from '../types';
 
 export function Shell({
@@ -11,6 +11,7 @@ export function Shell({
   searchPlaceholder,
   searchValue,
   onSearchChange,
+  onSearchClear,
   topIcons,
   children,
   sidebarItems,
@@ -34,6 +35,7 @@ export function Shell({
   searchPlaceholder: string;
   searchValue?: string;
   onSearchChange?: (val: string) => void;
+  onSearchClear?: () => void;
   topIcons: React.ReactNode;
   children: React.ReactNode;
   sidebarItems: NavItem[];
@@ -95,12 +97,26 @@ export function Shell({
           <div className="topbar-brand">RASAC Framework</div>
           <div className="top-actions">
             <div className="search-box">
-              <Search size={18} />
+              <Search size={16} />
               <input
                 placeholder={searchPlaceholder}
                 value={searchValue ?? ''}
                 onChange={(e) => onSearchChange?.(e.target.value)}
+                aria-label={searchPlaceholder}
               />
+              {searchValue && (onSearchClear || onSearchChange) && (
+                <button
+                  type="button"
+                  className="student-search-clear"
+                  aria-label="Clear search"
+                  onClick={() => {
+                    if (onSearchClear) onSearchClear();
+                    else onSearchChange?.('');
+                  }}
+                >
+                  <X size={11} />
+                </button>
+              )}
             </div>
             {topIcons}
           </div>
@@ -110,3 +126,4 @@ export function Shell({
     </div>
   );
 }
+

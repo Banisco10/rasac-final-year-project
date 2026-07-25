@@ -30,6 +30,7 @@ export type AccessContext = {
   academicPeriodId?: number;
   targetStudentId?: number;
   targetCourseId?: number;
+  requestPath?: string;
 };
 
 export type AccessRequest = {

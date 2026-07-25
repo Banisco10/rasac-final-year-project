@@ -15,6 +15,7 @@ import { Shell } from '../../components/Shell';
 import type { View, Grade, AuthenticatedUser, AcademicPeriod } from '../../types';
 import { api } from '../../api';
 import { getStudentInitials, studentSidebarItems } from './studentPortal';
+import { Modal } from '../../components/Modal';
 
 type Transcript = {
   studentId: number;
@@ -33,8 +34,11 @@ function gradeTone(status: Grade['status']) {
 function distributionForGrades(grades: Grade[]) {
   return [
     { label: 'A', count: grades.filter((grade) => grade.grade.startsWith('A')).length },
+    { label: 'B+', count: grades.filter((grade) => grade.grade.startsWith('B')).length },
     { label: 'B', count: grades.filter((grade) => grade.grade.startsWith('B')).length },
+    { label: 'C+', count: grades.filter((grade) => grade.grade.startsWith('C')).length },
     { label: 'C', count: grades.filter((grade) => grade.grade.startsWith('C')).length },
+    { label: 'D+', count: grades.filter((grade) => grade.grade.startsWith('D')).length },
     { label: 'D', count: grades.filter((grade) => grade.grade.startsWith('D')).length },
     { label: 'F', count: grades.filter((grade) => grade.grade.startsWith('F')).length },
   ];
@@ -54,14 +58,46 @@ export function StudentGradesScreen({
   const [grades, setGrades] = useState<Grade[]>([]);
   const [transcript, setTranscript] = useState<Transcript | null>(null);
   const [activePeriod, setActivePeriod] = useState<AcademicPeriod | null>(null);
+  const [search, setSearch] = useState('');
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeTitle, setNoticeTitle] = useState('');
+  const [noticeBody, setNoticeBody] = useState('');
+  const [transcriptLoaded, setTranscriptLoaded] = useState(false);
+  const [meLoaded, setMeLoaded] = useState(false);
+  const [gradesLoaded, setGradesLoaded] = useState(false);
+  const [periodLoaded, setPeriodLoaded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
 
-  useEffect(() => {
-    api.me().then(setMe).catch(console.error);
-    api.myGrades().then(setGrades).catch(console.error);
-    api.transcript().then((data) => setTranscript(data as unknown as Transcript)).catch(console.error);
-    api.activePeriod().then(setActivePeriod).catch(console.error);
-  }, []);
+  const loadData = () => {
+  setRefreshing(true);
+  setLoadErrors([]);
 
+  Promise.allSettled([
+    api.me().then(setMe)
+      .catch(() => setLoadErrors((prev) => [...prev, 'profile']))
+      .finally(() => setMeLoaded(true)),
+    api.myGrades().then(setGrades)
+      .catch(() => setLoadErrors((prev) => [...prev, 'grades']))
+      .finally(() => setGradesLoaded(true)),
+    api.transcript().then((data) => setTranscript(data as unknown as Transcript))
+      .catch(() => setLoadErrors((prev) => [...prev, 'transcript']))
+      .finally(() => setTranscriptLoaded(true)),
+    api.activePeriod().then(setActivePeriod)
+      .catch(() => setLoadErrors((prev) => [...prev, 'academic period']))
+      .finally(() => setPeriodLoaded(true)),
+  ]).finally(() => setRefreshing(false));
+    };
+
+    useEffect(() => {
+      loadData();
+    }, []);
+
+  const openNotice = (title: string, body: string) => {
+    setNoticeTitle(title);
+    setNoticeBody(body);
+    setNoticeOpen(true);
+  };
   const displayName = me?.fullName ?? 'Student';
   const initials = getStudentInitials(displayName);
 
@@ -70,8 +106,21 @@ export function StudentGradesScreen({
     : grades.map((grade) => ({ ...grade, course: null }));
 
   const orderedGrades = useMemo(
-    () => [...transcriptGrades].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()),
-    [transcriptGrades],
+    () => {
+      const sorted = [...transcriptGrades].sort(
+        (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+      );
+      if (!search.trim()) return sorted;
+      const term = search.toLowerCase();
+      return sorted.filter(
+        (g) =>
+          (g.course?.title ?? '').toLowerCase().includes(term) ||
+          (g.course?.code ?? '').toLowerCase().includes(term) ||
+          g.grade.toLowerCase().includes(term) ||
+          g.status.toLowerCase().includes(term),
+      );
+    },
+    [transcriptGrades, search],
   );
 
   const counts = useMemo(() => ({
@@ -104,17 +153,37 @@ export function StudentGradesScreen({
       brandTitle="RASAC Framework"
       brandSubtitle="GRADE TRANSCRIPT"
       searchPlaceholder="Search grade records..."
+      searchValue={search}
+      onSearchChange={setSearch}
       sidebarItems={studentSidebarItems}
       footerAction={exportTranscript}
       footerActionClassName="deploy-btn"
       footerActionLabel="Export Transcript"
       footerActionIcon={<DownloadCloud size={16} />}
-      footerUser={{ name: displayName.toUpperCase(), role: me?.department ?? 'Student' }}
+      footerUser={{ name: displayName.toUpperCase(), role: me?.role ?? 'STUDENT' }}
       topIcons={
         <>
-          <button className="icon-chip" aria-label="Notifications"><Bell size={20} /></button>
-          <button className="icon-chip" aria-label="Console"><Monitor size={20} /></button>
-          <button className="icon-chip" aria-label="Settings"><Settings size={20} /></button>
+          <button
+            className="icon-chip"
+            aria-label="Notifications"
+            onClick={() => openNotice('Notifications', `You have ${counts.submitted} grade${counts.submitted === 1 ? '' : 's'} awaiting approval.`)}
+          >
+            <Bell size={20} />
+          </button>
+          <button
+            className="icon-chip"
+            aria-label="Console"
+            onClick={() => openNotice('Console Status', `Active period: ${activePeriod?.name ?? 'None'}. ${counts.total} grade record${counts.total === 1 ? '' : 's'} on file.`)}
+          >
+            <Monitor size={20} />
+          </button>
+          <button
+            className="icon-chip"
+            aria-label="Settings"
+            onClick={() => openNotice('Settings', `Department: ${me?.department ?? 'Not set'}`)}
+          >
+            <Settings size={20} />
+          </button>
           <div className="student-user-chip" aria-label="Student profile">
             <div className="student-user-copy">
               <strong>{displayName.toUpperCase()}</strong>
@@ -130,6 +199,30 @@ export function StudentGradesScreen({
       showSidebarLinks={true}
     >
       <section className="page-stack student-page student-grades-page">
+          {loadErrors.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              padding: '14px 18px',
+              borderRadius: '8px',
+              border: '1px solid var(--danger, #b91c1c)',
+              background: 'var(--panel, rgba(255,255,255,0.03))',
+            }}
+          >
+            <div>
+              <strong style={{ color: 'var(--text)' }}>Some information couldn't load</strong>
+              <p style={{ color: 'var(--muted)', margin: '2px 0 0', fontSize: '13px' }}>
+                We had trouble loading your {loadErrors.join(', ')}. Try refreshing — if it keeps happening, contact support.
+              </p>
+            </div>
+            <button type="button" className="primary-mini" onClick={loadData}>
+              <RefreshCcw size={14} /> Retry
+            </button>
+          </div>
+        )}
         <header className="student-page-hero student-hero-grades">
           <div>
             <div className="student-page-kicker">TRANSCRIPT RIBBON</div>
@@ -153,7 +246,7 @@ export function StudentGradesScreen({
           </article>
           <article className="student-insight-card">
             <span>TOTAL CREDITS</span>
-            <strong>{transcript?.totalCredits ?? counts.total * 3}</strong>
+            <strong>{transcriptLoaded ? (transcript?.totalCredits ?? 0) : '—'}</strong>
             <p>Credits completed and recorded.</p>
           </article>
           <article className="student-insight-card">
@@ -175,8 +268,8 @@ export function StudentGradesScreen({
                 <Award size={18} />
                 <h3>TRANSCRIPT SUMMARY</h3>
               </div>
-              <button className="view-btn" type="button" onClick={() => api.transcript().then((data) => setTranscript(data as unknown as Transcript)).catch(console.error)}>
-                <RefreshCcw size={16} />
+              <button className="view-btn" type="button" onClick={loadData} disabled={refreshing}>
+                <RefreshCcw size={16} className={refreshing ? 'spinning' : ''} />
                 Refresh
               </button>
             </div>
@@ -212,6 +305,7 @@ export function StudentGradesScreen({
               <div className="student-grade-head">
                 <span>COURSE</span>
                 <span>STATUS</span>
+                <span>SCORE</span>
                 <span>MARK</span>
                 <span>SUBMITTED</span>
               </div>
@@ -228,6 +322,7 @@ export function StudentGradesScreen({
                     <span>{grade.course?.code ?? `#${grade.courseId}`}</span>
                   </div>
                   <span className={`student-grade-pill ${gradeTone(grade.status)}`}>{grade.status}</span>
+                  <span className="student-grade-score">{grade.score}%</span>
                   <strong className="student-grade-mark">{grade.grade}</strong>
                   <span>{new Date(grade.submittedAt).toLocaleDateString()}</span>
                 </div>
@@ -266,6 +361,14 @@ export function StudentGradesScreen({
           </aside>
         </section>
       </section>
+      <Modal
+        open={noticeOpen}
+        title={noticeTitle}
+        onClose={() => setNoticeOpen(false)}
+        footer={<button type="button" className="primary-mini" onClick={() => setNoticeOpen(false)}>Close</button>}
+      >
+        <div style={{ whiteSpace: 'pre-line', color: 'var(--text-muted)' }}>{noticeBody}</div>
+      </Modal>
     </Shell>
   );
 }

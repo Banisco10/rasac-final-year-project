@@ -3,19 +3,29 @@ import {
   Bell,
   Clock3,
   Filter,
+  ChevronLeft,
+  ChevronRight,
   History,
   Monitor,
   RefreshCcw,
   Settings,
   Shield,
-  Search,
   Sparkles,
   BookOpen,
 } from 'lucide-react';
 import { Shell } from '../../components/Shell';
-import type { View, AuditLog, AuthenticatedUser } from '../../types';
+import type { View, AuditLog, AuthenticatedUser, Grade, AcademicPeriod } from '../../types';
 import { api } from '../../api';
 import { getStudentInitials, studentSidebarItems } from './studentPortal';
+import { Modal } from '../../components/Modal';
+
+
+type Transcript = {
+  studentId: number;
+  gpa: number;
+  totalCredits: number;
+  grades: Array<Grade & { course: { id: number; code: string; title: string; credits: number } | null }>;
+};
 
 function toneForOutcome(outcome: AuditLog['outcome']) {
   if (outcome === 'GRANTED') return 'success';
@@ -34,18 +44,53 @@ export function StudentActivityScreen({
   onLogout: () => void;
 }) {
   const [me, setMe] = useState<AuthenticatedUser | null>(null);
+  const [grades, setGrades] = useState<Grade[]>([]);
   const [activity, setActivity] = useState<AuditLog[]>([]);
   const [search, setSearch] = useState('');
   const [outcomeFilter, setOutcomeFilter] = useState<'ALL' | AuditLog['outcome']>('ALL');
+  const [page, setPage] = useState(1);
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeTitle, setNoticeTitle] = useState('');
+  const [noticeBody, setNoticeBody] = useState('');
+  const [transcript, setTranscript] = useState<Transcript | null>(null);
+  const [activePeriod, setActivePeriod] = useState<AcademicPeriod | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
+
+  const loadData = () => {
+  setRefreshing(true);
+  setLoadErrors([]);
+  Promise.allSettled([
+    api.me().then(setMe).catch(() => setLoadErrors((prev) => [...prev, 'profile'])),
+    api.auditMy().then(setActivity).catch(() => setLoadErrors((prev) => [...prev, 'activity log'])),
+    api.myGrades().then(setGrades).catch(() => setLoadErrors((prev) => [...prev, 'grades'])),
+    api.transcript().then((data) => setTranscript(data as unknown as Transcript)).catch(() => setLoadErrors((prev) => [...prev, 'transcript'])),
+    api.activePeriod().then(setActivePeriod).catch(() => setLoadErrors((prev) => [...prev, 'academic period'])),
+  ]).finally(() => setRefreshing(false));
+};
+
+  useEffect(() => 
+    {
+      loadData();
+    },
+    []);
+
+
+  const PAGE_SIZE = 10;
+  
+  const openNotice = (title: string, body: string) => {
+    setNoticeTitle(title);
+    setNoticeBody(body);
+    setNoticeOpen(true);
+  };
 
   useEffect(() => {
-    api.me().then(setMe).catch(console.error);
-    api.auditMy().then(setActivity).catch(console.error);
-  }, []);
+    setPage(1);
+  }, [search, outcomeFilter]);
 
   const displayName = me?.fullName ?? 'Student';
   const initials = getStudentInitials(displayName);
-
+  
   const filtered = useMemo(
     () =>
       activity.filter((log) => {
@@ -64,6 +109,11 @@ export function StudentActivityScreen({
       }),
     [activity, outcomeFilter, search],
   );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageStart = (page - 1) * PAGE_SIZE;
+  const pageEnd = Math.min(pageStart + PAGE_SIZE, filtered.length);
+  const displayStart = filtered.length > 0 ? pageStart + 1 : 0;
 
   const counts = useMemo(() => ({
     total: activity.length,
@@ -71,6 +121,36 @@ export function StudentActivityScreen({
     denied: activity.filter((log) => log.outcome !== 'GRANTED').length,
     latest: activity[0] ?? null,
   }), [activity]);
+
+  const transcriptGrades: Array<Grade & { course: Transcript['grades'][number]['course'] }> = transcript
+      ? transcript.grades
+      : grades.map((grade) => ({ ...grade, course: null }));
+  const orderedGrades = useMemo(
+      () => {
+        const sorted = [...transcriptGrades].sort(
+          (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+        );
+        if (!search.trim()) return sorted;
+        const term = search.toLowerCase();
+        return sorted.filter(
+          (g) =>
+            (g.course?.title ?? '').toLowerCase().includes(term) ||
+            (g.course?.code ?? '').toLowerCase().includes(term) ||
+            g.grade.toLowerCase().includes(term) ||
+            g.status.toLowerCase().includes(term),
+        );
+      },
+      [transcriptGrades, search],
+    );
+
+  const countsAlert = useMemo(() => ({
+      total: orderedGrades.length,
+      approved: orderedGrades.filter((grade) => grade.status === 'APPROVED').length,
+      submitted: orderedGrades.filter((grade) => grade.status === 'SUBMITTED').length,
+      average: orderedGrades.length
+        ? Math.round(orderedGrades.reduce((sum, grade) => sum + grade.score, 0) / orderedGrades.length)
+        : null,
+    }), [orderedGrades]);
 
   return (
     <Shell
@@ -80,17 +160,37 @@ export function StudentActivityScreen({
       brandTitle="RASAC Framework"
       brandSubtitle="STUDENT ACTIVITY"
       searchPlaceholder="Search your activity..."
+      searchValue={search}
+      onSearchChange={setSearch}
       sidebarItems={studentSidebarItems}
       footerAction={() => onNavigate('student-support')}
       footerActionClassName="deploy-btn"
       footerActionLabel="Need Help?"
       footerActionIcon={<Sparkles size={16} />}
-      footerUser={{ name: displayName.toUpperCase(), role: me?.department ?? 'Student' }}
+      footerUser={{ name: displayName.toUpperCase(), role: me?.role ?? 'STUDENT' }}
       topIcons={
         <>
-          <button className="icon-chip" aria-label="Notifications"><Bell size={20} /></button>
-          <button className="icon-chip" aria-label="Console"><Monitor size={20} /></button>
-          <button className="icon-chip" aria-label="Settings"><Settings size={20} /></button>
+          <button
+            className="icon-chip"
+            aria-label="Notifications"
+            onClick={() => openNotice('Notifications', `You have ${counts.denied} event${counts.denied === 1 ? '' : 's'} that needed policy review.`)}
+          >
+            <Bell size={20} />
+          </button>
+          <button
+            className="icon-chip"
+            aria-label="Console"
+            onClick={() => openNotice('Console Status', `${counts.total} total activity event${counts.total === 1 ? '' : 's'} on record.`)}
+          >
+            <Monitor size={20} />
+          </button>
+          <button
+            className="icon-chip"
+            aria-label="Settings"
+            onClick={() => openNotice('Settings', `Department: ${me?.department ?? 'Not set'}`)}
+          >
+            <Settings size={20} />
+          </button>
           <div className="student-user-chip" aria-label="Student profile">
             <div className="student-user-copy">
               <strong>{displayName.toUpperCase()}</strong>
@@ -106,6 +206,30 @@ export function StudentActivityScreen({
       showSidebarLinks={true}
     >
       <section className="page-stack student-page student-activity-page">
+          {loadErrors.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              padding: '14px 18px',
+              borderRadius: '8px',
+              border: '1px solid var(--danger, #b91c1c)',
+              background: 'var(--panel, rgba(255,255,255,0.03))',
+            }}
+          >
+            <div>
+              <strong style={{ color: 'var(--text)' }}>Some information couldn't load</strong>
+              <p style={{ color: 'var(--muted)', margin: '2px 0 0', fontSize: '13px' }}>
+                We had trouble loading your {loadErrors.join(', ')}. Try refreshing — if it keeps happening, contact support.
+              </p>
+            </div>
+            <button type="button" className="primary-mini" onClick={loadData}>
+              <RefreshCcw size={14} /> Retry
+            </button>
+          </div>
+        )}
         <header className="student-page-hero student-hero-activity">
           <div>
             <div className="student-page-kicker">JOURNEY LOG</div>
@@ -150,23 +274,12 @@ export function StudentActivityScreen({
               <Filter size={18} />
               <h3>FILTER ACTIVITY</h3>
             </div>
-            <button className="view-btn" type="button" onClick={() => api.auditMy().then(setActivity).catch(console.error)}>
-              <RefreshCcw size={16} />
+            <button className="view-btn" type="button" onClick={loadData} disabled={refreshing}>
+              <RefreshCcw size={16} className={refreshing ? 'spinning' : ''} />
               Refresh
             </button>
           </div>
           <div className="grading-form-grid student-activity-filter-grid">
-            <div className="grading-field">
-              <label>Search</label>
-              <div className="grading-input-wrap">
-                <Search size={16} />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Action, resource, path, or reason"
-                />
-              </div>
-            </div>
             <div className="grading-field">
               <label>Outcome</label>
               <div className="grading-select-wrap">
@@ -195,13 +308,13 @@ export function StudentActivityScreen({
             </div>
 
             <div className="student-journey-feed">
-              {filtered.length === 0 ? (
+              {paginated.length === 0 ? (
                 <div className="student-empty-state">
                   <strong>No activity matches the filters.</strong>
                   <p>Try a different search term or outcome filter.</p>
                 </div>
               ) : (
-                filtered.map((log) => (
+                paginated.map((log) => (
                   <article className={`student-journey-item ${toneForOutcome(log.outcome)}`} key={log.id}>
                     <div className="student-journey-marker">
                       <span />
@@ -224,6 +337,35 @@ export function StudentActivityScreen({
                     </div>
                   </article>
                 ))
+              )}
+              {filtered.length > 0 && (
+                <div className="audit-pagination">
+                  <div>
+                    Showing {displayStart}-{pageEnd} of {filtered.length} matching event{filtered.length === 1 ? '' : 's'}.
+                    {filtered.length !== activity.length && ` ${activity.length} total.`}
+                  </div>
+                  <div className="audit-pagination-controls">
+                    <button
+                      type="button"
+                      className="icon-chip"
+                      aria-label="Previous activity page"
+                      disabled={page === 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <span>Page {page} of {totalPages}</span>
+                    <button
+                      type="button"
+                      className="icon-chip"
+                      aria-label="Next activity page"
+                      disabled={page === totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -250,6 +392,14 @@ export function StudentActivityScreen({
           </aside>
         </section>
       </section>
+      <Modal
+        open={noticeOpen}
+        title={noticeTitle}
+        onClose={() => setNoticeOpen(false)}
+        footer={<button type="button" className="primary-mini" onClick={() => setNoticeOpen(false)}>Close</button>}
+      >
+        <div style={{ whiteSpace: 'pre-line', color: 'var(--text-muted)' }}>{noticeBody}</div>
+      </Modal>
     </Shell>
   );
 }

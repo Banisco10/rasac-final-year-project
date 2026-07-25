@@ -72,6 +72,27 @@ export async function updateUser(req: AuthenticatedRequest, res: Response): Prom
   sendSuccess(res, { updated: true });
 }
 
+export async function updateMyContactInfo(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const officeLocation = typeof req.body.officeLocation === 'string' ? req.body.officeLocation.trim() : '';
+  const consultationHours = typeof req.body.consultationHours === 'string' ? req.body.consultationHours.trim() : '';
+
+  if (officeLocation.length > 160 || consultationHours.length > 160) {
+    sendError(res, 400, 'VALIDATION_ERROR', 'Office location and consultation hours must be 160 characters or fewer');
+    return;
+  }
+
+  const user = await updateUserById(req.auth!.userId, {
+    officeLocation: officeLocation || null,
+    consultationHours: consultationHours || null,
+  });
+  if (!user) {
+    sendError(res, 404, 'RESOURCE_NOT_FOUND', 'User not found');
+    return;
+  }
+
+  sendSuccess(res, { user: await buildAuthUser(user.id) });
+}
+
 export async function deleteUser(req: AuthenticatedRequest, res: Response): Promise<void> {
   const user = await userById(Number(req.params.id));
   if (!user) {

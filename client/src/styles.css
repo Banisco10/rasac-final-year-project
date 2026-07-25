@@ -2926,8 +2926,10 @@ select {
 }
 
 .view-btn {
+  display: flex;
+  column-gap: 10px;
   min-height: 38px;
-  padding: 0 18px;
+  padding: 10px 10px;
   font-family: var(--font-mono);
 }
 
@@ -2953,6 +2955,11 @@ select {
   background: var(--accent);
   color: #06131f;
   border-color: transparent;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 .bottom-two {
@@ -3098,8 +3105,11 @@ select {
 }
 
 .outlined-btn {
+  display: flex;
+  column-gap: 10px;
+  flex-direction: row;
   min-height: 52px;
-  padding: 0 18px;
+  padding: 18px 18px;
   background: transparent;
   border: 1px solid var(--border);
   color: #d9e2ef;
@@ -3488,6 +3498,30 @@ select {
 
 .audit-entry.compact {
   border-left: 2px solid rgba(255,176,166,0.8);
+}
+
+.audit-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.audit-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  color: #c4cfdd;
+  white-space: nowrap;
+}
+
+.audit-pagination-controls .icon-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 .principal {
@@ -4080,6 +4114,35 @@ select {
   gap: 4px;
 }
 
+.contact-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.contact-inline-input {
+  min-height: 38px;
+  width: min(260px, 100%);
+  border: 1px solid rgba(255,255,255,0.16);
+  background: var(--field-bg);
+  color: #dce5f2;
+  padding: 0 12px;
+  outline: none;
+}
+
+.contact-inline-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(69, 240, 207, 0.16);
+}
+
+.contact-error {
+  margin: 0;
+  padding: 0 22px 18px;
+  color: var(--danger);
+  font-size: 0.82rem;
+}
+
 .active-course-item {
   display: flex;
   align-items: center;
@@ -4303,18 +4366,75 @@ select {
   letter-spacing: 0.04em;
 }
 
+/* ── Student portal: redesigned header search bar ── */
 .student-main .search-box {
-  min-width: 252px;
-  width: 252px;
-  height: 34px;
-  border-radius: 14px;
-  border-color: rgba(255, 255, 255, 0.14);
+  position: relative;
+  min-width: 300px;
+  width: 340px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(77, 235, 217, 0.22);
+  background: rgba(6, 18, 30, 0.72);
+  backdrop-filter: blur(8px);
+  gap: 10px;
+  padding: 0 14px 0 14px;
+  transition: border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+.student-main .search-box:focus-within {
+  border-color: rgba(77, 235, 217, 0.68);
+  background: rgba(6, 18, 30, 0.9);
+  box-shadow:
+    0 0 0 3px rgba(77, 235, 217, 0.10),
+    0 0 18px rgba(77, 235, 217, 0.12);
+}
+
+.student-main .search-box svg {
+  flex-shrink: 0;
+  color: rgba(77, 235, 217, 0.5);
+  transition: color 220ms ease;
+}
+
+.student-main .search-box:focus-within svg {
+  color: var(--accent);
+}
+
+.student-main .search-box input {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  color: #d8e6f4;
+  caret-color: var(--accent);
 }
 
 .student-main .search-box input::placeholder {
-  color: #95a0b2;
+  color: rgba(149, 160, 178, 0.7);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+}
+
+/* Clear (×) button that appears inside the search bar */
+.student-search-clear {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease;
+  padding: 0;
+}
+
+.student-search-clear:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--text);
 }
 
 .student-main .icon-chip {
@@ -4496,6 +4616,7 @@ select {
 
 .security-chip {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
   color: #f0af43;
@@ -5280,7 +5401,7 @@ select {
 .student-grade-head,
 .student-grade-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) 0.7fr 0.45fr 0.55fr;
+  grid-template-columns: minmax(0, 1.5fr) 0.7fr 0.45fr 0.45fr 0.55fr;
   gap: 14px;
   align-items: center;
 }
@@ -5545,10 +5666,14 @@ select {
 }
 
 .student-support-clear {
-  background-color: rgba(255,0,0,0.5);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--muted);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.student-support-clear:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.24);
 }
 
 .student-support-mail {
@@ -6972,4 +7097,43 @@ select option,
   padding: 12px;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.03);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.student-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+.student-pagination-status {
+  white-space: nowrap;
+}
+
+.student-pagination .outlined-btn {
+  min-height: 38px;
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.student-pagination .outlined-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }

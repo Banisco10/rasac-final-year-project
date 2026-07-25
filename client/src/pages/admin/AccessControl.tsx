@@ -35,7 +35,7 @@ export function AccessControlScreen({
     { view: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { view: 'course-detail', label: 'Courses', icon: <BookOpen size={20} /> },
     { view: 'user-management', label: 'Users', icon: <Users size={20} /> },
-    { view: 'role-management', label: 'Access Control', icon: <ShieldCheck size={20} /> },
+    { view: 'access-control', label: 'Access Control', icon: <ShieldCheck size={20} /> },
     { view: 'audit-logs', label: 'Audit Logs', icon: <FileText size={20} /> },
     { view: 'system-settings', label: 'System Settings', icon: <Settings size={20} /> },
   ];
@@ -55,17 +55,27 @@ export function AccessControlScreen({
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeBody, setNoticeBody] = useState('');
+  const [pendingToggle, setPendingToggle] = useState<{ role: RoleKey; action: ActionKey } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
+  const [ipError, setIpError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadMatrix = async () => {
-    const response = await api.accessMatrix();
-    setMatrix(response);
-    setDraftPolicy(response.policyConfig);
-    setDirty(false);
+    try {
+      const response = await api.accessMatrix();
+      setMatrix(response);
+      setDraftPolicy(response.policyConfig);
+      setDirty(false);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Unable to reach the RASAC server.');
+    }
   };
 
   useEffect(() => {
     api.me().then(setMe).catch(console.error);
-    loadMatrix().catch(console.error);
+    loadMatrix();
   }, []);
 
   const displayName = me?.fullName ?? 'Administrator';
@@ -78,7 +88,7 @@ export function AccessControlScreen({
     setNoticeOpen(true);
   };
 
-  const togglePermission = (role: RoleKey, action: ActionKey) => {
+  const applyTogglePermission = (role: RoleKey, action: ActionKey) => {
     setDraftPolicy((current) => {
       const base = current ?? matrix.policyConfig;
       if (!base) return current;
@@ -95,6 +105,20 @@ export function AccessControlScreen({
       };
     });
     setDirty(true);
+  };
+
+  const togglePermission = (role: RoleKey, action: ActionKey) => {
+    const base = config;
+    const isOwnRole = me?.role === role;
+    const isCurrentlyGranted = base?.matrix?.[role]?.[action] ?? false;
+
+    // Only intercept when the admin is about to REMOVE a permission from their OWN role —
+    // that's the specific action that risks locking every admin out of this screen.
+    if (isOwnRole && isCurrentlyGranted) {
+      setPendingToggle({ role, action });
+      return;
+    }
+    applyTogglePermission(role, action);
   };
 
   const roleRows = matrix.roles.map((role) => {
@@ -126,16 +150,28 @@ export function AccessControlScreen({
   };
 
   const handleDiscardChanges = async () => {
-    try {
-      await loadMatrix();
+    await loadMatrix();
+    if (!loadError) {
       openNotice('Draft changes discarded', 'Access control edits were reset to the latest saved policy.');
-    } catch (error) {
-      console.error(error);
     }
   };
 
   const handleAddIpRange = () => {
-    if (!ipRange.trim()) return;
+    const trimmed = ipRange.trim();
+
+    if (!trimmed) {
+      setIpError('Enter an IP range.');
+      return;
+    }
+    if (!isValidIpRange(trimmed)) {
+      setIpError('Enter a valid IPv4 address or CIDR range, e.g. 10.0.0.0/24.');
+      return;
+    }
+    if ((config?.environmental.ipRanges ?? []).includes(trimmed)) {
+      setIpError('This range is already in the list.');
+      return;
+    }
+
     setDraftPolicy((current) => {
       const base = current ?? matrix.policyConfig;
       if (!base) return current;
@@ -143,15 +179,33 @@ export function AccessControlScreen({
         ...base,
         environmental: {
           ...base.environmental,
-          ipRanges: Array.from(new Set([...base.environmental.ipRanges, ipRange.trim()])),
+          ipRanges: [...base.environmental.ipRanges, trimmed],
         },
       };
     });
     setDirty(true);
     setIpRange('');
+    setIpError(null);
     setIpModalOpen(false);
     openNotice('IP range added', 'The new network range has been added to the draft policy. Remember to save.');
   };
+
+  const isValidIpRange = (value: string) => {
+  // Matches an IPv4 address, optionally with a /0–32 CIDR suffix
+  const pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(\/(\d{1,2}))?$/;
+  const match = value.match(pattern);
+  if (!match) return false;
+
+  const octets = [match[1], match[2], match[3], match[4]].map(Number);
+  if (octets.some((o) => o < 0 || o > 255)) return false;
+
+  if (match[6] !== undefined) {
+    const prefix = Number(match[6]);
+    if (prefix < 0 || prefix > 32) return false;
+  }
+
+  return true;
+};
 
   const removeIpRange = (range: string) => {
     setDraftPolicy((current) => {
@@ -186,6 +240,9 @@ export function AccessControlScreen({
     setDirty(true);
   };
 
+  const matchesSearch = (text: string) =>
+  !searchQuery.trim() || text.toLowerCase().includes(searchQuery.toLowerCase().trim());
+
   const handleEmergencyLockout = async () => {
     const enable = !matrix.emergencyLockoutActive;
     try {
@@ -212,20 +269,28 @@ export function AccessControlScreen({
     const nowMins = now.getHours() * 60 + now.getMinutes();
     const startMins = startH * 60 + (startM || 0);
     const endMins = endH * 60 + (endM || 0);
-    const span = endMins - startMins;
+
+    // Overnight window (e.g. 22:00–06:00): span wraps past midnight.
+    const overnight = endMins <= startMins;
+    const span = overnight ? (endMins + 1440) - startMins : endMins - startMins;
     if (span <= 0) return 0;
-    const elapsed = Math.min(Math.max(nowMins - startMins, 0), span);
+
+    // Normalize "now" onto the same wrapped timeline as the window.
+    const nowNormalized = overnight && nowMins < startMins ? nowMins + 1440 : nowMins;
+    const elapsed = Math.min(Math.max(nowNormalized - startMins, 0), span);
     return Math.round((elapsed / span) * 100);
   })();
-
+  
   return (
     <Shell
-      activeView="role-management"
+      activeView="access-control"
       onNavigate={onNavigate}
       onLogout={onLogout}
       brandTitle="RASAC Admin"
       brandSubtitle="HIGHER ED SECURITY"
-      searchPlaceholder="Search permissions, roles, or users..."
+      searchPlaceholder="Search roles or constraints..."
+      searchValue={searchQuery}
+      onSearchChange={setSearchQuery}
       sidebarItems={sidebarItems}
       footerAction={() => setConfirmLockoutOpen(true)}
       footerActionClassName="emergency-btn"
@@ -266,7 +331,7 @@ export function AccessControlScreen({
     >
       <section className="page-stack access-page">
         <div className="role-hero">
-          <div className="breadcrumbs">Access Control &gt; <span>Role Management</span></div>
+          <div className="breadcrumbs">Administration &gt; <span>Access Control</span></div>
           <div className="role-header-row">
             <div>
               <h1>Global Permission Matrix</h1>
@@ -277,7 +342,12 @@ export function AccessControlScreen({
             </div>
             <div className="role-actions">
               {dirty && <span className="unsaved-indicator">Unsaved changes</span>}
-              <button className="outlined-btn" type="button" onClick={() => handleDiscardChanges().catch(console.error)}>
+              <button
+                className="outlined-btn"
+                type="button"
+                disabled={!dirty}
+                onClick={() => setConfirmDiscardOpen(true)}
+              >
                 Discard Changes
               </button>
               <button
@@ -291,6 +361,20 @@ export function AccessControlScreen({
             </div>
           </div>
         </div>
+
+        {loadError && (
+          <div className="lockout-alert" style={{ borderColor: 'var(--danger)' }}>
+            <AlertTriangle size={20} className="lockout-icon" />
+            <div style={{ flex: 1 }}>
+              <p className="lockout-title">Couldn't load the access control policy</p>
+              <p className="lockout-desc">{loadError}</p>
+            </div>
+            <button type="button" className="primary-mini" onClick={() => loadMatrix()}>
+              Retry
+            </button>
+          </div>
+        )}
+
 
         <div className="access-grid">
           <section className="panel-card matrix-card">
@@ -310,7 +394,11 @@ export function AccessControlScreen({
                 <span>Approve</span>
               </div>
               {roleRows.map(({ role, desc, actions }) => (
-                <div className="matrix-row" key={role}>
+                <div
+                  className="matrix-row"
+                  key={role}
+                  style={searchQuery.trim() && !matchesSearch(role) && !matchesSearch(desc) ? { opacity: 0.35 } : undefined}
+                >
                   <div>
                     <strong>{role}</strong>
                     <span>{desc}</span>
@@ -339,7 +427,7 @@ export function AccessControlScreen({
                 <h3>ACADEMIC ASSOCIATIONS</h3>
               </div>
             </div>
-            <div className="association-block">
+            <div className="association-block" style={searchQuery.trim() && !matchesSearch('Enrolled in Course') ? { opacity: 0.35 } : undefined}>
               <div className="association-icon"><Users size={24} /></div>
               <div className="association-main">
                 <div className="association-head">
@@ -358,7 +446,7 @@ export function AccessControlScreen({
                 </div>
               </div>
             </div>
-            <div className="association-block">
+            <div className="association-block" style={searchQuery.trim() && !matchesSearch('Assigned Lecturer') ? { opacity: 0.35 } : undefined}>
               <div className="association-icon"><UserRoundCheck size={24} /></div>
               <div className="association-main">
                 <div className="association-head">
@@ -387,7 +475,7 @@ export function AccessControlScreen({
               </div>
             </div>
             <div className="constraints-stack">
-              <div className="constraint-box">
+              <div className="constraint-box" style={searchQuery.trim() && !matchesSearch('IP Range Restrictions') ? { opacity: 0.35 } : undefined}>
                 <div className="constraint-head">
                   <strong>IP Range Restrictions</strong>
                   <Shield size={16} />
@@ -401,14 +489,14 @@ export function AccessControlScreen({
                       </button>
                     </span>
                   ))}
-                  <button className="chip add-chip" type="button" aria-label="Add IP range" onClick={() => setIpModalOpen(true)}>
+                  <button className="chip add-chip" type="button" aria-label="Add IP range" onClick={() => { setIpError(null); setIpModalOpen(true); }}>
                     <Plus size={14} />
                   </button>
                 </div>
                 <p>Geo-fencing active for Registrar data access.</p>
               </div>
 
-              <div className="constraint-box">
+              <div className="constraint-box" style={searchQuery.trim() && !matchesSearch('Time-of-Day Windows') ? { opacity: 0.35 } : undefined}>
                 <div className="constraint-head">
                   <strong>Time-of-Day Windows</strong>
                 </div>
@@ -434,7 +522,7 @@ export function AccessControlScreen({
                 </div>
               </div>
 
-              <div className="constraint-box alert">
+              <div className="constraint-box alert" style={searchQuery.trim() && !matchesSearch('Grading Period Constraints') ? { opacity: 0.35 } : undefined}>
                 <div className="constraint-head">
                   <strong>Grading Period Constraints</strong>
                   <AlertTriangle size={18} />
@@ -457,10 +545,10 @@ export function AccessControlScreen({
         open={ipModalOpen}
         title="Add allowed IP range"
         description="Add a network range to the draft policy before saving."
-        onClose={() => setIpModalOpen(false)}
+        onClose={() => { setIpModalOpen(false); setIpError(null); }}
         footer={(
           <>
-            <button type="button" className="outlined-btn" onClick={() => setIpModalOpen(false)}>Cancel</button>
+            <button type="button" className="outlined-btn" onClick={() => { setIpModalOpen(false); setIpError(null); }}>Cancel</button>
             <button type="button" className="primary-mini" onClick={handleAddIpRange}>Add Range</button>
           </>
         )}
@@ -468,7 +556,36 @@ export function AccessControlScreen({
         <label className="modal-field">
           <span>Allowed IP range</span>
           <input value={ipRange} onChange={(e) => setIpRange(e.target.value)} placeholder="10.0.0.0/24" />
+          {ipError && <small style={{ color: 'var(--danger)' }}>{ipError}</small>}
         </label>
+      </Modal>
+
+      <Modal
+        open={Boolean(pendingToggle)}
+        title="Remove your own access?"
+        description={pendingToggle ? `${pendingToggle.role} — ${pendingToggle.action.toUpperCase()}` : ''}
+        onClose={() => setPendingToggle(null)}
+        footer={(
+          <>
+            <button type="button" className="outlined-btn" onClick={() => setPendingToggle(null)}>Cancel</button>
+            <button
+              type="button"
+              className="primary-mini"
+              onClick={() => {
+                if (pendingToggle) applyTogglePermission(pendingToggle.role, pendingToggle.action);
+                setPendingToggle(null);
+              }}
+            >
+              Remove Anyway
+            </button>
+          </>
+        )}
+      >
+        <p style={{ color: 'var(--text-muted)' }}>
+          This permission belongs to your own role. Removing it — once saved — could immediately
+          restrict your own access to this system, including this permission matrix itself.
+          If no other administrator retains this permission, it may be difficult to reverse.
+        </p>
       </Modal>
 
       <Modal
@@ -498,6 +615,32 @@ export function AccessControlScreen({
         footer={<button type="button" className="primary-mini" onClick={() => setNoticeOpen(false)}>Close</button>}
       >
         <div style={{ whiteSpace: 'pre-line', color: 'var(--text-muted)' }}>{noticeBody}</div>
+      </Modal>
+
+      <Modal
+        open={confirmDiscardOpen}
+        title="Discard unsaved changes?"
+        description="This will reset the permission matrix and constraints back to the last saved policy."
+        onClose={() => setConfirmDiscardOpen(false)}
+        footer={(
+          <>
+            <button type="button" className="outlined-btn" onClick={() => setConfirmDiscardOpen(false)}>Cancel</button>
+            <button
+              type="button"
+              className="primary-mini"
+              onClick={() => {
+                setConfirmDiscardOpen(false);
+                handleDiscardChanges();
+              }}
+            >
+              Discard Changes
+            </button>
+          </>
+        )}
+      >
+        <p style={{ color: 'var(--text-muted)' }}>
+          All unsaved edits — permission toggles, IP ranges, and time-window settings — will be lost.
+        </p>
       </Modal>
     </Shell>
   );

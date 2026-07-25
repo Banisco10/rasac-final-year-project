@@ -17,6 +17,10 @@ export function authorize(options: AuthorizationOptions) {
       return;
     }
     const context = await options.getContext(req);
+    context.requestPath = req.originalUrl;
+    console.log('AUTHORIZE MIDDLEWARE SET PATH:', context.requestPath, 'for', options.resource, options.action);
+
+
     const decision = await accessDecisionEngine.evaluate({
       userId: req.auth.userId,
       userRole: req.auth.role as RoleCode,

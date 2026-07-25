@@ -97,7 +97,7 @@ export function CourseDetailScreen({
     { view: 'dashboard',       label: 'Dashboard',      icon: <LayoutDashboard size={20} /> },
     { view: 'course-detail',   label: 'Courses',         icon: <BookOpen size={20} /> },
     { view: 'user-management', label: 'Users',           icon: <Users size={20} /> },
-    { view: 'role-management', label: 'Access Control',  icon: <Shield size={20} /> },
+    { view: 'access-control', label: 'Access Control',  icon: <Shield size={20} /> },
     { view: 'audit-logs',      label: 'Audit Logs',      icon: <FileText size={20} /> },
     { view: 'system-settings', label: 'System Settings', icon: <Settings size={20} /> },
   ];
@@ -114,6 +114,7 @@ export function CourseDetailScreen({
   const [noticeOpen, setNoticeOpen]   = useState(false);
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeBody, setNoticeBody]   = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const openNotice = (title: string, body: string) => {
     setNoticeTitle(title); setNoticeBody(body); setNoticeOpen(true);
@@ -144,6 +145,7 @@ export function CourseDetailScreen({
     setDetail(null);
     setPage(1);
     setError(null);
+    setSearchQuery('');
     Promise.all([
       api.course(selectedId),
       api.courseStudents(selectedId),
@@ -160,19 +162,40 @@ export function CourseDetailScreen({
     }).finally(() => setDetailLoading(false));
   }, [selectedId]);
 
+  
   // Course list metrics
   const listMetrics = useMemo(() => {
-    const totalEnrollments = courses.reduce((sum) => sum, 0);
     const active = courses.filter((c) => c.isActive).length;
-    return { total: courses.length, active, totalEnrollments };
+    return { total: courses.length, active };
   }, [courses]);
 
   // Detail metrics
   const students = detail?.students ?? [];
   const grades   = detail?.grades ?? [];
+  
+  const filteredCourses = useMemo(() => {
+  const text = searchQuery.toLowerCase().trim();
+  if (!text) return courses;
+  return courses.filter((c) =>
+    c.code.toLowerCase().includes(text) ||
+    c.title.toLowerCase().includes(text)
+  );
+}, [courses, searchQuery]);
 
-  const averageScore = grades.length
-    ? Math.round(grades.reduce((s, g) => s + g.score, 0) / grades.length)
+const filteredStudents = useMemo(() => {
+  const text = searchQuery.toLowerCase().trim();
+  if (!text) return students;
+  return students.filter((s) =>
+    s.fullName.toLowerCase().includes(text) ||
+    s.email.toLowerCase().includes(text) ||
+    (s.studentId ?? '').toLowerCase().includes(text)
+  );
+}, [students, searchQuery]);
+
+
+  const countedGrades = grades.filter((g) => g.status === 'APPROVED');
+  const averageScore = countedGrades.length
+    ? Math.round(countedGrades.reduce((s, g) => s + g.score, 0) / countedGrades.length)
     : null;
   const approvedCount  = grades.filter((g) => g.status === 'APPROVED').length;
   const pendingCount   = grades.filter((g) => g.status === 'SUBMITTED').length;
@@ -202,9 +225,9 @@ const denialBarSegments = totalDenied > 0 ? [
 
   // Pagination
   const pageSize = 6;
-  const totalPages      = Math.max(1, Math.ceil(students.length / pageSize));
+  const totalPages      = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
   const safePage        = Math.min(page, totalPages);
-  const visibleStudents = students.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const visibleStudents = filteredStudents.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   // Grade lookup per student
   const gradeByStudent = useMemo(() => {
@@ -220,7 +243,9 @@ const denialBarSegments = totalDenied > 0 ? [
       onLogout={onLogout}
       brandTitle="RASAC Admin"
       brandSubtitle="HIGHER ED SECURITY"
-      searchPlaceholder="Search system resources..."
+      searchPlaceholder={selectedId ? 'Search enrolled students...' : 'Search courses...'}
+      searchValue={searchQuery}
+      onSearchChange={setSearchQuery}
       sidebarItems={sidebarItems}
       footerAction={async () => {
         try {
@@ -325,14 +350,14 @@ const denialBarSegments = totalDenied > 0 ? [
                         </td>
                       </tr>
                     )}
-                    {!loading && courses.length === 0 && (
+                    {!loading && filteredCourses.length === 0 && (
                       <tr>
                         <td colSpan={5} style={{ textAlign: 'center', color: 'var(--muted)', padding: 24 }}>
-                          No courses found.
+                          {courses.length === 0 ? 'No courses found.' : 'No courses match your search.'}
                         </td>
                       </tr>
                     )}
-                    {courses.map((course) => (
+                    {filteredCourses.map((course) => (
                       <tr key={course.id}>
                         <td><strong>{course.code}</strong></td>
                         <td>{course.title}</td>
@@ -357,7 +382,7 @@ const denialBarSegments = totalDenied > 0 ? [
                 </table>
               </div>
               <div style={{ padding: '14px 18px', color: 'var(--muted)', fontSize: 13 }}>
-                {courses.length} course{courses.length !== 1 ? 's' : ''} in registry
+                {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''}{searchQuery.trim() ? ' matching search' : ' in registry'}
               </div>
             </section>
           </>
@@ -371,7 +396,7 @@ const denialBarSegments = totalDenied > 0 ? [
               type="button"
               className="outlined-btn"
               style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8 }}
-              onClick={() => { setSelectedId(null); setDetail(null); setError(null); }}
+              onClick={() => { setSelectedId(null); setDetail(null); setError(null); setSearchQuery(''); }}
             >
               <ArrowLeft size={16} /> Back to Courses
             </button>
@@ -404,13 +429,17 @@ const denialBarSegments = totalDenied > 0 ? [
                     <div className="course-metric-label">ENROLLED</div>
                     <div className="course-metric-value">{students.length}</div>
                     <div className="progress-track">
-                      <div className="progress-fill" style={{ width: `${Math.min(100, students.length * 14)}%` }} />
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${students.length > 0 ? Math.round((grades.length / students.length) * 100) : 0}%` }}
+                      />
                     </div>
+                    <div className="course-metric-sub">{grades.length}/{students.length} graded</div>
                   </div>
                   <div className="course-metric-card">
                     <div className="course-metric-label">GRADE AVG</div>
                     <div className="course-metric-value">{averageScore !== null ? `${averageScore}%` : '—'}</div>
-                    <div className="course-metric-sub">{grades.length} submission{grades.length !== 1 ? 's' : ''}</div>
+                    <div className="course-metric-sub">{countedGrades.length} submission{countedGrades.length !== 1 ? 's' : ''}</div>
                   </div>
                   <div className="course-metric-card">
                     <div className="course-metric-label">APPROVED</div>
@@ -510,7 +539,6 @@ const denialBarSegments = totalDenied > 0 ? [
                 </section>
 
                 {/* Authorization analytics */}
-                <div className="bottom-two">
                   <section className="panel-card side-summary-card">
                     <div className="panel-heading">
                       <h3>Authorization Analytics</h3>
@@ -551,48 +579,6 @@ const denialBarSegments = totalDenied > 0 ? [
                       )}
                     </div>
                   </section>
-
-                  <section className="panel-card side-summary-card">
-                    <div className="panel-heading">
-                      <h3>Authorization Analytics</h3>
-                      <BarChart3 size={18} />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, padding: '16px 18px 4px' }}>
-                      <div className="metric-tile">
-                        <div className="metric-title">TOTAL</div>
-                        <div className="metric-number small">{authAnalytics.total}</div>
-                      </div>
-                      <div className="metric-tile green">
-                        <div className="metric-title">GRANTED</div>
-                        <div className="metric-number small">{authAnalytics.granted}</div>
-                      </div>
-                      <div className="metric-tile pink">
-                        <div className="metric-title">GRANT RATE</div>
-                        <div className="metric-number small">
-                          {authAnalytics.total > 0 ? Math.round((authAnalytics.granted / authAnalytics.total) * 100) : 0}%
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ padding: '18px' }}>
-                      <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                        Denials by layer
-                      </div>
-                      {totalDenied > 0 ? (
-                        <AnimatedBarBreakdown
-                          items={[
-                            { label: 'ROLE', count: authAnalytics.deniedRole, color: '#6b7db3' },
-                            { label: 'RELATIONSHIP', count: authAnalytics.deniedRel, color: '#45f0cf' },
-                            { label: 'CONTEXT', count: authAnalytics.deniedCtx, color: '#8a8fa8' },
-                          ]}
-                        />
-                      ) : (
-                        <div style={{ fontSize: 12, color: 'var(--muted)' }}>No denials recorded for this course.</div>
-                      )}
-                    </div>
-                  </section>
-                </div>
               </>
             ) : null}
           </>

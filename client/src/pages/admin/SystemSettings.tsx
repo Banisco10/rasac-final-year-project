@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type React from 'react';
 import {
   LayoutDashboard,
   BookOpen,
@@ -18,6 +19,8 @@ import { Shell } from '../../components/Shell';
 import { Modal } from '../../components/Modal';
 import type { View, NavItem } from '../../types';
 import { api } from '../../api';
+import type { AdminStats } from '../../api';
+import type { PolicyConfig } from '../../types';
 
 export function SystemSettingsScreen({
   onNavigate,
@@ -31,37 +34,40 @@ export function SystemSettingsScreen({
     { view: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { view: 'course-detail', label: 'Courses', icon: <BookOpen size={20} /> },
     { view: 'user-management', label: 'Users', icon: <Users size={20} /> },
-    { view: 'role-management', label: 'Access Control', icon: <ShieldCheck size={20} /> },
+    { view: 'access-control', label: 'Access Control', icon: <ShieldCheck size={20} /> },
     { view: 'audit-logs', label: 'Audit Logs', icon: <FileText size={20} /> },
     { view: 'system-settings', label: 'System Settings', icon: <Settings size={20} /> },
   ];
 
-  const [stats, setStats] = useState<any>(null);
-  const [matrix, setMatrix] = useState<any>(null);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [matrix, setMatrix] = useState<{
+    roles: any[];
+    permissions: any[];
+    rolePermissions: any[];
+    policyConfig: PolicyConfig;
+    emergencyLockoutActive: boolean;
+  } | null>(null);
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeBody, setNoticeBody] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [ipRangesInput, setIpRangesInput] = useState('');
-  const [startTimeInput, setStartTimeInput] = useState('08:00');
-  const [endTimeInput, setEndTimeInput] = useState('18:00');
-  const [blockOutsideInput, setBlockOutsideInput] = useState(true);
+
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = () => {
+    setLoading(true);
     Promise.all([api.adminStats(), api.accessMatrix()])
       .then(([statsResponse, matrixResponse]) => {
         setStats(statsResponse);
         setMatrix(matrixResponse);
-        const config = matrixResponse.policyConfig;
-        if (config?.environmental) {
-          setIpRangesInput(config.environmental.ipRanges?.join('\n') ?? '');
-          setStartTimeInput(config.environmental.timeWindow?.start ?? '08:00');
-          setEndTimeInput(config.environmental.timeWindow?.end ?? '18:00');
-          setBlockOutsideInput(config.environmental.timeWindow?.blockOutside ?? true);
-        }
+        setLoadError(null);
       })
-      .catch(console.error);
+      .catch((error) => {
+        setLoadError(error instanceof Error ? error.message : 'Unable to reach the RASAC server.');
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -71,42 +77,57 @@ export function SystemSettingsScreen({
   const roleCount = matrix?.roles?.length ?? 0;
   const permissionCount = matrix?.permissions?.length ?? 0;
 
-  const handleSaveSettings = async () => {
-    if (!matrix) return;
-    try {
-      const updatedConfig = {
-        ...matrix.policyConfig,
-        environmental: {
-          ...matrix.policyConfig.environmental,
-          ipRanges: ipRangesInput.split('\n').map((s: string) => s.trim()).filter(Boolean),
-          timeWindow: {
-            start: startTimeInput,
-            end: endTimeInput,
-            blockOutside: blockOutsideInput,
-          },
-        },
-      };
-      const response = await api.updateAccessMatrix(updatedConfig);
-      if (response.success) {
-        setMatrix({
-          ...matrix,
-          policyConfig: response.policyConfig,
-        });
-        openNotice('System settings saved', 'Operating hours and Network zones were successfully updated on the server.');
-      } else {
-        openNotice('Save failed', 'Could not save policy config settings.');
-      }
-    } catch (error) {
-      console.error(error);
-      openNotice('Error saving settings', error instanceof Error ? error.message : 'Unknown error');
-    }
-  };
-
   const openNotice = (title: string, body: string) => {
     setNoticeTitle(title);
     setNoticeBody(body);
     setNoticeOpen(true);
   };
+
+  const normalizedSearch = searchQuery.toLowerCase().trim();
+  const matchesSearch = (...values: string[]) =>
+    !normalizedSearch || values.some((value) => value.toLowerCase().includes(normalizedSearch));
+
+  const platformSummaryRows: Array<{ title: string; value: string; icon: React.ReactNode }> = [
+    { title: 'Active Period', value: stats?.activePeriod?.name ?? 'No active period', icon: <Clock3 size={18} /> },
+    { title: 'Active Sessions', value: String(stats?.activeSessions ?? 0), icon: <Monitor size={18} /> },
+    { title: 'Security Events', value: String(stats?.securityEvents ?? 0), icon: <Shield size={18} /> },
+    { title: 'Policy Roles', value: `${roleCount} roles / ${permissionCount} permissions`, icon: <Database size={18} /> },
+  ];
+
+  const ipRangeCount = matrix?.policyConfig?.environmental?.ipRanges?.length ?? 0;
+  const coreSettingsRows: Array<{
+    setting: string;
+    value: string;
+    status: string;
+    scope: string;
+    source: string;
+    indicator: React.ReactNode;
+  }> = [
+    {
+      setting: 'Authentication',
+      value: 'Single sign-on + refresh tokens',
+      status: 'Enabled',
+      scope: 'Global',
+      source: 'Auth service',
+      indicator: <ShieldCheck size={16} />,
+    },
+    {
+      setting: 'Auditing',
+      value: 'Security events retained',
+      status: 'Enabled',
+      scope: 'Global',
+      source: 'Audit pipeline',
+      indicator: <FileText size={16} />,
+    },
+    {
+      setting: 'Geofencing',
+      value: ipRangeCount ? `${ipRangeCount} range(s)` : 'None',
+      status: ipRangeCount ? 'Restricted' : 'Open',
+      scope: 'Context',
+      source: 'Policy config',
+      indicator: <Globe size={16} />,
+    },
+  ];
 
   return (
     <Shell
@@ -141,8 +162,8 @@ export function SystemSettingsScreen({
           <button className="icon-chip" type="button" aria-label="Console" onClick={() => onNavigate('audit-logs')}>
             <Monitor size={20} />
           </button>
-          <button className="icon-chip" type="button" aria-label="Refresh" onClick={loadData}>
-            <RefreshCcw size={20} />
+          <button className="icon-chip" type="button" aria-label="Refresh" disabled={loading} onClick={loadData}>
+            <RefreshCcw size={20} className={loading ? 'spin-icon' : ''} />
           </button>
           <button className="profile-chip small" type="button" onClick={() => openNotice('System settings', 'ADMIN_01 | Security Principal')}>
             <span className="profile-label">ADMIN_01</span>
@@ -152,6 +173,22 @@ export function SystemSettingsScreen({
       topbarClassName="role-main"
     >
       <section className="page-stack role-page system-settings-page">
+        <style>{`
+          @keyframes rasac-spin { to { transform: rotate(360deg); } }
+          .spin-icon { animation: rasac-spin 0.7s linear infinite; transform-origin: center; }
+        `}</style>
+        {loadError && (
+          <div className="lockout-alert" style={{ borderColor: 'var(--danger)' }}>
+            <Shield size={20} className="lockout-icon" />
+            <div style={{ flex: 1 }}>
+              <p className="lockout-title">Couldn't load system settings</p>
+              <p className="lockout-desc">{loadError}</p>
+            </div>
+            <button type="button" className="primary-mini" onClick={loadData}>
+              Retry
+            </button>
+          </div>
+        )}
         <div className="role-hero">
           <div className="breadcrumbs">Administration &gt; <span>System Settings</span></div>
           <div className="role-header-row">
@@ -160,15 +197,8 @@ export function SystemSettingsScreen({
               <p>Configure platform-wide defaults, security boundaries, and operational guardrails from a single dedicated page.</p>
             </div>
             <div className="role-actions">
-              <button className="outlined-btn" type="button" onClick={loadData}>
-                Refresh
-              </button>
-              <button
-                className="primary-mini"
-                type="button"
-                onClick={handleSaveSettings}
-              >
-                Save Settings
+              <button className="outlined-btn" type="button" disabled={loading} onClick={loadData}>
+                {loading ? 'Refreshing...' : 'Refresh'}
               </button>
             </div>
           </div>
@@ -181,21 +211,13 @@ export function SystemSettingsScreen({
               <h3>Platform Summary</h3>
             </div>
             <div className="perm-grid">
-              {[
-                ['Active Period', stats?.activePeriod?.name ?? 'No active period', <Clock3 size={18} />],
-                ['Active Sessions', String(stats?.activeSessions ?? 0), <Monitor size={18} />],
-                ['Security Events', String(stats?.securityEvents ?? 0), <Shield size={18} />],
-                ['Policy Roles', `${roleCount} roles / ${permissionCount} permissions`, <Database size={18} />],
-              ].filter(([title, val]) => {
-                const text = searchQuery.toLowerCase();
-                return title.toLowerCase().includes(text) || String(val).toLowerCase().includes(text);
-              }).map(([title, value, icon]) => (
-                <div className="perm-card" key={String(title)}>
+              {platformSummaryRows.filter(({ title, value }) => matchesSearch(title, value)).map(({ title, value, icon }) => (
+                <div className="perm-card" key={title}>
                   <div>
                     <div className="perm-title">{icon} {title}</div>
                     <div className="perm-desc">{value}</div>
                   </div>
-                  <div className="toggle on"><span /></div>
+                  <span className="status-dot success" aria-label="Live" />
                 </div>
               ))}
             </div>
@@ -205,73 +227,32 @@ export function SystemSettingsScreen({
             <div className="panel-heading">
               <div className="section-tag dotted">CONTEXT</div>
               <h3>Environment Guardrails</h3>
+              <button
+                className="outlined-btn"
+                type="button"
+                style={{ marginLeft: 'auto' }}
+                onClick={() => onNavigate('access-control')}
+              >
+                Manage in Access Control -&gt;
+              </button>
             </div>
             <div className="rule-list">
               <div className="rule-card cyan">
                 <div className="rule-tag">NETWORK ZONES</div>
-                <div className="rule-title">Allowed IP Ranges (one per line)</div>
-                <textarea
-                  className="settings-textarea"
-                  value={ipRangesInput}
-                  onChange={(e) => setIpRangesInput(e.target.value)}
-                  placeholder="No IP restrictions configured."
-                  style={{
-                    width: '100%',
-                    minHeight: '80px',
-                    background: 'rgba(0,0,0,0.2)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: 'var(--text)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '13px',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    resize: 'vertical',
-                    marginTop: '8px'
-                  }}
-                />
+                <div className="rule-title">Allowed IP Ranges</div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '8px' }}>
+                  {matrix?.policyConfig?.environmental?.ipRanges?.length
+                    ? `${matrix.policyConfig.environmental.ipRanges.length} range(s) configured`
+                    : 'No IP restrictions configured.'}
+                </p>
               </div>
               <div className="rule-card amber">
                 <div className="rule-tag amber">TIME WINDOW</div>
                 <div className="rule-title">Operating Hours</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Start:</span>
-                    <input
-                      type="time"
-                      value={startTimeInput}
-                      onChange={(e) => setStartTimeInput(e.target.value)}
-                      style={{
-                        background: 'rgba(0,0,0,0.2)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: 'var(--text)',
-                        padding: '4px 8px',
-                        borderRadius: '4px'
-                      }}
-                    />
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>End:</span>
-                    <input
-                      type="time"
-                      value={endTimeInput}
-                      onChange={(e) => setEndTimeInput(e.target.value)}
-                      style={{
-                        background: 'rgba(0,0,0,0.2)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: 'var(--text)',
-                        padding: '4px 8px',
-                        borderRadius: '4px'
-                      }}
-                    />
-                  </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text)' }}>
-                    <input
-                      type="checkbox"
-                      checked={blockOutsideInput}
-                      onChange={(e) => setBlockOutsideInput(e.target.checked)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                    <span>Block grades modification outside hours</span>
-                  </label>
-                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '8px' }}>
+                  {matrix?.policyConfig?.environmental?.timeWindow?.start ?? '08:00'} - {matrix?.policyConfig?.environmental?.timeWindow?.end ?? '18:00'}
+                  {matrix?.policyConfig?.environmental?.timeWindow?.blockOutside ? ' - access blocked outside hours' : ' - outside-hour access allowed'}
+                </p>
               </div>
             </div>
           </section>
@@ -290,21 +271,10 @@ export function SystemSettingsScreen({
                 <span>Source</span>
                 <span>Indicator</span>
               </div>
-              {[
-                ['Authentication', 'Single sign-on + refresh tokens', 'Enabled', 'Global', 'Auth service', <ShieldCheck size={16} />],
-                ['Auditing', 'Security events retained', 'Enabled', 'Global', 'Audit pipeline', <FileText size={16} />],
-                ['Geofencing', ipRangesInput ? `${ipRangesInput.split('\n').filter(Boolean).length} range(s)` : 'None', ipRangesInput ? 'Restricted' : 'Open', 'Context', 'Policy config', <Globe size={16} />],
-              ].filter(([setting, value, status, scope, source]) => {
-                const text = searchQuery.toLowerCase();
-                return (
-                  setting.toLowerCase().includes(text) ||
-                  value.toLowerCase().includes(text) ||
-                  status.toLowerCase().includes(text) ||
-                  scope.toLowerCase().includes(text) ||
-                  source.toLowerCase().includes(text)
-                );
-              }).map(([setting, value, status, scope, source, indicator]) => (
-                <div className="resource-row" key={String(setting)}>
+              {coreSettingsRows
+                .filter(({ setting, value, status, scope, source }) => matchesSearch(setting, value, status, scope, source))
+                .map(({ setting, value, status, scope, source, indicator }) => (
+                <div className="resource-row" key={setting}>
                   <div className="resource-entity">{setting}</div>
                   <div>{value}</div>
                   <div className="resource-id">{status}</div>

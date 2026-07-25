@@ -9,6 +9,7 @@ import {
   deleteUser,
   lockUser,
   unlockUser,
+  updateMyContactInfo,
 } from './users.controller.js';
 
 const router = Router();
@@ -33,6 +34,16 @@ router.post(
     getContext: (req) => ({ timestamp: new Date(), ipAddress: req.ip ?? '' }),
   }),
   createUserController
+);
+
+router.patch(
+  '/me/contact',
+  authorize({
+    resource: 'my-profile',
+    action: 'write',
+    getContext: (req) => ({ timestamp: new Date(), ipAddress: req.ip ?? '' }),
+  }),
+  updateMyContactInfo
 );
 
 router.get(

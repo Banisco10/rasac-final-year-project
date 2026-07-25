@@ -9,12 +9,23 @@ import {
   History,
   Shield,
   RefreshCcw,
+  AlertTriangle
 } from 'lucide-react';
 import { Shell } from '../../components/Shell';
 import { Modal } from '../../components/Modal';
-import type { View, NavItem, Course, AuditLog, AuthenticatedUser } from '../../types';
+import type { View, NavItem, Course, AuditLog, AuthenticatedUser, AcademicPeriod } from '../../types';
 import { api } from '../../api';
 import type { PreviousLoginInfo } from '../../../../shared/types.js';
+
+
+type CourseProgress = {
+  studentCount: number;
+  gradedCount: number;
+  draftCount: number;
+  submittedCount: number;
+  rejectedCount: number;
+};
+
 
 export function LecturerDashboardScreen({
   previousLogin,
@@ -23,7 +34,7 @@ export function LecturerDashboardScreen({
 }: {
   signedIn: boolean;
   previousLogin?: PreviousLoginInfo | null;
-  onNavigate: (view: View) => void;
+  onNavigate: (view: View, params?: Record<string, string>) => void;
   onLogout: () => void;
 }) {
   const sidebarItems: NavItem[] = [
@@ -36,17 +47,66 @@ export function LecturerDashboardScreen({
   const [me, setMe] = useState<AuthenticatedUser | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [trail, setTrail] = useState<AuditLog[]>([]);
+  const [activePeriod, setActivePeriod] = useState<AcademicPeriod | null>(null);
+  const [courseProgress, setCourseProgress] = useState<Record<number, CourseProgress>>({});
   const [welcomeBannerOpen, setWelcomeBannerOpen] = useState(Boolean(previousLogin?.lastLogin));
   const [searchQuery, setSearchQuery] = useState('');
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeBody, setNoticeBody] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [visCourseId, setVisCourseId] = useState<number | null>(null);
 
-  const loadData = () => {
-    api.me().then(setMe).catch(console.error);
-    api.courses().then((response) => setCourses(response.data)).catch(console.error);
-    api.auditMy().then(setTrail).catch(console.error);
+useEffect(() => {
+  if (courses.length === 0) {
+    setVisCourseId(null);
+    return;
+  }
+  if (!visCourseId || !courses.some((c) => c.id === visCourseId)) {
+    setVisCourseId(courses[0].id);
+  }
+}, [courses]);
+
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [meRes, coursesRes, progressRows, trailRes, periodRes] = await Promise.all([
+        api.me(),
+        api.courses(),
+        api.myGradingProgress()
+      .then((rows) => {
+        const map: Record<number, CourseProgress> = {};
+        rows.forEach((row) => {
+          map[row.courseId] = {
+            studentCount: row.studentCount,
+            gradedCount: row.gradedCount,
+            draftCount: row.draftCount,
+            submittedCount: row.submittedCount,
+            rejectedCount: row.rejectedCount,
+          };
+        });
+        setCourseProgress(map);
+      })
+      .catch(console.error),
+        api.auditMy(),
+        api.activePeriod(),
+      ]);
+
+      setMe(meRes);
+      setCourses(coursesRes.data);
+
+      setTrail(trailRes);
+      setActivePeriod(periodRes);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Unable to reach the RASAC server.');
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   useEffect(() => {
     loadData();
@@ -57,6 +117,13 @@ export function LecturerDashboardScreen({
     setNoticeBody(body);
     setNoticeOpen(true);
   };
+
+
+  const gradingHoursLeft = activePeriod?.gradingClose
+  ? Math.max(0, Math.round((new Date(activePeriod.gradingClose).getTime() - Date.now()) / (1000 * 60 * 60)))
+  : null;
+
+  const showGradingWarning = gradingHoursLeft !== null && gradingHoursLeft <= 168; // 7 days
 
   const filteredCourses = courses.filter((course) => {
     const text = searchQuery.toLowerCase();
@@ -95,8 +162,10 @@ export function LecturerDashboardScreen({
       footerUser={{ name: displayName.toUpperCase(), role: me?.department ?? 'Lecturer' }}
       topIcons={
         <>
-          <button className="icon-chip" aria-label="Notifications" onClick={() => openNotice('Notifications', `Clearance: LEVEL_3. You have ${courses.length} active courses.`)}><Bell size={20} /></button>
-          <button className="icon-chip" aria-label="Refresh" onClick={loadData}><RefreshCcw size={20} /></button>
+          <button className="icon-chip" aria-label="Notifications" onClick={() => openNotice('Notifications', `You have ${courses.length} active courses.`)}><Bell size={20} /></button>
+          <button className="icon-chip" aria-label="Refresh" disabled={loading} onClick={loadData}>
+            <RefreshCcw size={20} className={loading ? 'spin-icon' : ''} />
+          </button>
           <button className="icon-chip" aria-label="History" onClick={() => openNotice('History Logs', `Total operations recorded: ${trail.length}`)}><History size={20} /></button>
           <div className="student-user-chip lecturer-chip">
             <div className="student-user-copy">
@@ -110,6 +179,22 @@ export function LecturerDashboardScreen({
       topbarClassName="portal-main"
     >
       <section className="page-stack portal-page lecturer-page">
+        <style>{`
+          @keyframes rasac-spin { to { transform: rotate(360deg); } }
+          .spin-icon { animation: rasac-spin 0.7s linear infinite; transform-origin: center; }
+          @keyframes rasac-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+        `}</style>
+        {loadError && (
+          <div className="portal-banner warning">
+            <div>
+              <strong>Couldn't load dashboard data</strong>
+              <p>{loadError}</p>
+            </div>
+            <button className="primary-mini" type="button" onClick={loadData}>
+              Retry
+            </button>
+          </div>
+        )}
         {welcomeBannerOpen && previousLogin && (
           <div className="portal-banner">
             <div>
@@ -126,21 +211,27 @@ export function LecturerDashboardScreen({
             </button>
           </div>
         )}
-        <div className="portal-banner warning">
-          <div>
-            <strong>Grading Window Closing</strong>
-            <p>The Q3 final assessment period concludes in 48 hours. Please finalize all grade submissions.</p>
+        {showGradingWarning && activePeriod && (
+          <div className="portal-banner warning">
+            <div>
+              <strong>Grading Window Closing</strong>
+              <p>
+                The {activePeriod.name} grading period concludes in{' '}
+                {gradingHoursLeft! >= 24 ? `${Math.round(gradingHoursLeft! / 24)} day(s)` : `${gradingHoursLeft} hour(s)`}.
+                Please finalize all grade submissions.
+              </p>
+            </div>
+            <button className="primary-mini" type="button" onClick={() => onNavigate('lecturer-grading')}>
+              Go to Grading
+            </button>
           </div>
-          <button className="primary-mini" type="button" onClick={() => onNavigate('lecturer-grading')}>
-            Go to Grading
-          </button>
-        </div>
+        )}
 
         <div className="portal-hero lecturer-hero">
           <div className="portal-hero-copy">
             <div className="hero-kicker">LECTURER DASHBOARD</div>
             <h1>{displayName}</h1>
-            <p>{me?.department ?? 'Computer Science'} — Senior Lecturer</p>
+            <p>{me?.department ?? 'Computer Science'} - Senior Lecturer</p>
           </div>
           <div className="portal-hero-actions">
             <button className="primary-mini" type="button" onClick={() => onNavigate('lecturer-grading')}>
@@ -170,15 +261,25 @@ export function LecturerDashboardScreen({
                     <span>{course.credits} credits</span>
                   </div>
                   <div className="lecturer-course-progress">
-                    <div className="progress-track small">
-                      <div className="progress-fill" style={{ width: '86%' }} />
-                    </div>
-                    <span>86%</span>
+                    {(() => {
+                      const progress = courseProgress[course.id];
+                      const pct = progress && progress.studentCount > 0
+                        ? Math.round((progress.gradedCount / progress.studentCount) * 100)
+                        : 0;
+                      return (
+                        <>
+                          <div className="progress-track small">
+                            <div className="progress-fill" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span>{progress ? `${pct}%` : '-'}</span>
+                        </>
+                      );
+                    })()}
                   </div>
                   <button
                     className="queue-action approve"
                     type="button"
-                    onClick={() => onNavigate('lecturer-grading')}
+                    onClick={() => onNavigate('lecturer-grading', { courseId: String(course.id) })}
                   >
                     SUBMIT GRADES
                   </button>
@@ -209,21 +310,63 @@ export function LecturerDashboardScreen({
 
           <section className="panel-card lecturer-visual-card">
             <div className="panel-heading">
-              <h3>Relationship Visualization</h3>
-              <span className="lecturer-node-label">NODE: LECTURER → COURSE → STUDENT</span>
+              <h3>Grade Pipeline</h3>
+              <span className="lecturer-node-label">
+                {Object.values(courseProgress).reduce((sum, p) => sum + p.studentCount, 0) > 0
+                  ? `${Object.values(courseProgress).reduce((sum, p) => sum + p.draftCount + p.submittedCount + p.gradedCount + p.rejectedCount, 0)} total`
+                  : '0 total'}
+              </span>
             </div>
-            <div className="relationship-graph">
-              <div className="graph-layer">
-                <span className="graph-dot" />
-                <span className="graph-dot" />
-                <span className="graph-dot" />
-              </div>
-              <div className="graph-core">
-                <span className="graph-node course">{courses[0]?.code ?? 'COURSE'}</span>
-                <span className="graph-node lecturer">{initials}</span>
-                <span className="graph-node student">Students</span>
-              </div>
-            </div>
+            {(() => {
+              const totals = Object.values(courseProgress).reduce(
+                (acc, p) => ({
+                  draft: acc.draft + p.draftCount,
+                  submitted: acc.submitted + p.submittedCount,
+                  approved: acc.approved + p.gradedCount,
+                  rejected: acc.rejected + p.rejectedCount,
+                }),
+                { draft: 0, submitted: 0, approved: 0, rejected: 0 }
+              );
+              const total = totals.draft + totals.submitted + totals.approved + totals.rejected;
+
+              if (total === 0) {
+                return <p style={{ color: 'var(--muted)', padding: '20px 0', textAlign: 'center' }}>No grade records yet.</p>;
+              }
+
+              const segments = [
+                { label: 'Draft', count: totals.draft, color: 'var(--muted)' },
+                { label: 'Submitted', count: totals.submitted, color: 'var(--warn)' },
+                { label: 'Approved', count: totals.approved, color: 'var(--success)' },
+                { label: 'Rejected', count: totals.rejected, color: 'var(--danger)' },
+              ];
+
+              return (
+                <div style={{ padding: '4px 2px' }}>
+                  <div style={{ display: 'flex', height: 14, borderRadius: 999, overflow: 'hidden' }}>
+                    {segments.map((seg) => seg.count > 0 && (
+                      <div
+                        key={seg.label}
+                        style={{
+                          width: `${(seg.count / total) * 100}%`,
+                          background: seg.color,
+                          opacity: seg.label === 'Rejected' && seg.count > 0 ? undefined : 1,
+                          animation: seg.label === 'Rejected' && seg.count > 0 ? 'rasac-pulse 1.8s ease-in-out infinite' : undefined,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 18px', marginTop: 12, fontSize: 12 }}>
+                    {segments.map((seg) => (
+                      <span key={seg.label} style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted)' }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: seg.color, display: 'inline-block' }} />
+                        {seg.label}: <strong style={{ color: 'var(--text)' }}>{seg.count}</strong>
+                        {seg.label === 'Rejected' && seg.count > 0 && <AlertTriangle size={13} color="var(--danger)" />}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </section>
 
           <section className="panel-card lecturer-context-card">
@@ -233,19 +376,18 @@ export function LecturerDashboardScreen({
             </div>
             <div className="context-grid">
               <div className="context-box">
-                <span>CLEARANCE</span>
-                <strong>LEVEL_3</strong>
+                <span>ROLE</span>
+                <strong>{me?.role ?? 'LECTURER'}</strong>
               </div>
               <div className="context-box">
-                <span>MFA STATUS</span>
-                <strong>VERIFIED</strong>
+                <span>ACTIVE COURSES</span>
+                <strong>{courses.length}</strong>
               </div>
             </div>
             <div className="context-binding">
               <span>RELATIONSHIP BINDING</span>
-              <strong>STAFF_ACADEMIC → DEPT_{me?.department?.toUpperCase().replace(' ', '_') ?? 'CS'}</strong>
+              <strong>STAFF_ACADEMIC - DEPT_{me?.department?.toUpperCase().replace(' ', '_') ?? 'CS'}</strong>
             </div>
-            <button className="primary-mini context-plus" type="button">+</button>
           </section>
         </div>
       </section>

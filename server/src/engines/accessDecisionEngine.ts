@@ -42,6 +42,7 @@ export class AccessDecisionEngine {
       outcome: 'DENIED_ROLE',
       denyReason: 'INSUFFICIENT_ROLE',
       ipAddress: request.context.ipAddress,
+      requestPath: request.context.requestPath ?? null,
       metadata: { layer: 'ROLE' },
     });
 
@@ -74,6 +75,7 @@ export class AccessDecisionEngine {
       outcome: 'DENIED_RELATIONSHIP',
       denyReason: 'NO_ACADEMIC_RELATIONSHIP',
       ipAddress: request.context.ipAddress,
+      requestPath: request.context.requestPath ?? null,
       metadata: { layer: 'RELATIONSHIP' },
     });
 
@@ -107,6 +109,7 @@ export class AccessDecisionEngine {
       outcome: 'DENIED_CONTEXT',
       denyReason: contextCheck.denyReason ?? 'OUTSIDE_GRADING_PERIOD',
       ipAddress: request.context.ipAddress,
+      requestPath: request.context.requestPath ?? null,
       metadata: { layer: 'CONTEXT' },
     });
 
@@ -147,6 +150,7 @@ export class AccessDecisionEngine {
       outcome: 'DENIED_SOD',
       denyReason: 'SEPARATION_OF_DUTY_VIOLATION',
       ipAddress: request.context.ipAddress,
+      requestPath: request.context.requestPath ?? null,
       metadata: { layer: 'SOD' },
     });
 
@@ -168,6 +172,7 @@ export class AccessDecisionEngine {
     resourceId: request.resourceId ?? null,
     outcome: 'GRANTED',
     ipAddress: request.context.ipAddress,
+    requestPath: request.context.requestPath ?? null,
     metadata: { layer: 'ALL' },
   });
 

@@ -14,6 +14,7 @@ import { Shell } from '../../components/Shell';
 import type { View, Course, Enrollment, AuthenticatedUser, AcademicPeriod } from '../../types';
 import { api } from '../../api';
 import { getStudentInitials, studentSidebarItems } from './studentPortal';
+import { Modal } from '../../components/Modal';
 
 function formatDate(value?: string | null) {
   return value ? new Date(value).toLocaleDateString() : '--';
@@ -33,18 +34,45 @@ export function StudentCoursesScreen({
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [activePeriod, setActivePeriod] = useState<AcademicPeriod | null>(null);
+  const [search, setSearch] = useState('');
+  const [meLoaded, setMeLoaded] = useState(false);
+  const [coursesLoaded, setCoursesLoaded] = useState(false);
+  const [enrollmentsLoaded, setEnrollmentsLoaded] = useState(false);
+  const [periodLoaded, setPeriodLoaded] = useState(false);
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticeTitle, setNoticeTitle] = useState('');
+  const [noticeBody, setNoticeBody] = useState('');
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    api.me().then(setMe).catch(console.error);
-    api.courses().then((response) => setCourses(response.data)).catch(console.error);
-    api.myEnrollments().then(setEnrollments).catch(console.error);
-    api.activePeriod().then(setActivePeriod).catch(console.error);
-  }, []);
+const loadData = () => {
+  setRefreshing(true);
+  setLoadErrors([]);
+
+  Promise.allSettled([
+    api.me().then(setMe).catch(() => setLoadErrors((prev) => [...prev, 'profile'])).finally(() => setMeLoaded(true)),
+    api.courses().then((response) => setCourses(response.data)).catch(() => setLoadErrors((prev) => [...prev, 'course catalog'])).finally(() => setCoursesLoaded(true)),
+    api.myEnrollments().then(setEnrollments).catch(() => setLoadErrors((prev) => [...prev, 'enrollments'])).finally(() => setEnrollmentsLoaded(true)),
+    api.activePeriod().then(setActivePeriod).catch(() => setLoadErrors((prev) => [...prev, 'academic period'])).finally(() => setPeriodLoaded(true)),
+  ]).finally(() => setRefreshing(false));
+};
+
+useEffect(() => {
+  loadData();
+}, []);
+
+  const openNotice = (title: string, body: string) => {
+    setNoticeTitle(title);
+    setNoticeBody(body);
+    setNoticeOpen(true);
+  };
 
   const enrolledCourseIds = useMemo(
     () => Array.from(new Set(enrollments.map((enrollment) => enrollment.courseId))),
     [enrollments],
   );
+
+  
 
   const displayName = me?.fullName ?? 'Student';
   const initials = getStudentInitials(displayName);
@@ -52,10 +80,19 @@ export function StudentCoursesScreen({
   const totalCredits = courses
     .filter((course) => enrolledCourseIds.includes(course.id))
     .reduce((sum, course) => sum + course.credits, 0);
-  const loading = !me || !courses.length;
+  const loading = !(meLoaded && coursesLoaded && enrollmentsLoaded && periodLoaded);
 
   const filteredCourses = courses
     .filter((course) => enrolledCourseIds.includes(course.id))
+    .filter((course) => {
+      if (!search.trim()) return true;
+      const term = search.toLowerCase();
+      return (
+        course.code.toLowerCase().includes(term) ||
+        course.title.toLowerCase().includes(term) ||
+        String(course.credits).includes(term)
+      );
+    })
     .sort((a, b) => a.code.localeCompare(b.code));
 
   return (
@@ -66,17 +103,37 @@ export function StudentCoursesScreen({
       brandTitle="RASAC Framework"
       brandSubtitle="STUDENT ACADEMICS"
       searchPlaceholder="Search courses..."
+      searchValue={search}
+      onSearchChange={setSearch}
       sidebarItems={studentSidebarItems}
       footerAction={() => onNavigate('student-grades')}
       footerActionClassName="deploy-btn"
       footerActionLabel="View Grades"
       footerActionIcon={<GraduationCap size={16} />}
-      footerUser={{ name: displayName.toUpperCase(), role: me?.department ?? 'Student' }}
+      footerUser={{ name: displayName.toUpperCase(), role: me?.role ?? 'STUDENT' }}
       topIcons={
         <>
-          <button className="icon-chip" aria-label="Notifications"><Bell size={20} /></button>
-          <button className="icon-chip" aria-label="Console"><Monitor size={20} /></button>
-          <button className="icon-chip" aria-label="Settings"><Settings size={20} /></button>
+          <button
+            className="icon-chip"
+            aria-label="Notifications"
+            onClick={() => openNotice('Notifications', `You are enrolled in ${enrolledCount} course${enrolledCount === 1 ? '' : 's'} this period.`)}
+          >
+            <Bell size={20} />
+          </button>
+          <button
+            className="icon-chip"
+            aria-label="Console"
+            onClick={() => openNotice('Console Status', `Active period: ${activePeriod?.name ?? 'None'}. ${filteredCourses.length} course${filteredCourses.length === 1 ? '' : 's'} currently visible.`)}
+          >
+            <Monitor size={20} />
+          </button>
+          <button
+            className="icon-chip"
+            aria-label="Settings"
+            onClick={() => openNotice('Settings', `Department: ${me?.department ?? 'Not set'}`)}
+          >
+            <Settings size={20} />
+          </button>
           <div className="student-user-chip" aria-label="Student profile">
             <div className="student-user-copy">
               <strong>{displayName.toUpperCase()}</strong>
@@ -92,6 +149,31 @@ export function StudentCoursesScreen({
       showSidebarLinks={true}
     >
       <section className="page-stack student-page student-courses-page">
+          {loadErrors.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              padding: '14px 18px',
+              borderRadius: '8px',
+              border: '1px solid var(--danger, #b91c1c)',
+              background: 'var(--panel, rgba(255,255,255,0.03))',
+            }}
+          >
+            <div>
+              <strong style={{ color: 'var(--text)' }}>Some information couldn't load</strong>
+              <p style={{ color: 'var(--muted)', margin: '2px 0 0', fontSize: '13px' }}>
+                We had trouble loading your {loadErrors.join(', ')}. Try refreshing — if it keeps happening, contact support.
+              </p>
+            </div>
+            <button className="view-btn" type="button" onClick={loadData} disabled={refreshing}>
+              <RefreshCcw size={16} className={refreshing ? 'spinning' : ''} />
+              Retry
+            </button>
+          </div>
+        )}
         <header className="student-page-hero student-hero-courses">
           <div>
             <div className="student-page-kicker">COURSE ATLAS</div>
@@ -115,7 +197,7 @@ export function StudentCoursesScreen({
           </article>
           <article className="student-insight-card">
             <span>TOTAL CREDITS</span>
-            <strong>{totalCredits || enrollments.length * 3}</strong>
+            <strong>{loading ? '—' : totalCredits}</strong>
             <p>Credits currently in progress.</p>
           </article>
           <article className="student-insight-card">
@@ -137,8 +219,8 @@ export function StudentCoursesScreen({
                 <BookOpen size={18} />
                 <h3>ENROLLED COURSES</h3>
               </div>
-              <button className="view-btn" type="button" onClick={() => api.myEnrollments().then(setEnrollments).catch(console.error)}>
-                <RefreshCcw size={16} />
+              <button className="view-btn" type="button" onClick={loadData} disabled={refreshing}>
+                <RefreshCcw size={16} className={refreshing ? 'spinning' : ''} />
                 Refresh
               </button>
             </div>
@@ -191,24 +273,42 @@ export function StudentCoursesScreen({
 
           <aside className="panel-card student-course-sidebar">
             <div className="panel-heading">
-              <h3>COURSE SNAPSHOT</h3>
+              <h3>PERIOD SNAPSHOT</h3>
               <Shield size={18} />
             </div>
-            <div className="student-snapshot-list">
-              {filteredCourses.slice(0, 4).map((course) => (
-                <div className="student-snapshot-item" key={course.id}>
-                  <strong>{course.code}</strong>
-                  <span>{course.title}</span>
-                  <p>{course.credits} credits | Enrollment #{enrollments.find((entry) => entry.courseId === course.id)?.id ?? '--'}</p>
+
+            {activePeriod ? (
+              <div className="student-snapshot-list">
+                <div className="student-snapshot-item">
+                  <strong>{activePeriod.name}</strong>
+                  <span>Term dates</span>
+                  <p>{formatDate(activePeriod.startDate)} – {formatDate(activePeriod.endDate)}</p>
                 </div>
-              ))}
-              {filteredCourses.length === 0 && (
-                <p style={{ color: 'var(--muted)', margin: 0 }}>Open your enrollments to see course details here.</p>
-              )}
-            </div>
+                <div className="student-snapshot-item">
+                  <strong>Grading Window</strong>
+                  <span>When grades are being finalized</span>
+                  <p>{formatDate(activePeriod.gradingOpen)} – {formatDate(activePeriod.gradingClose)}</p>
+                </div>
+                <div className="student-snapshot-item">
+                  <strong>{enrolledCount}</strong>
+                  <span>Courses enrolled</span>
+                  <p>{totalCredits} total credits this period</p>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: 'var(--muted)', margin: 0 }}>No active academic period found.</p>
+            )}
           </aside>
         </section>
       </section>
+      <Modal
+        open={noticeOpen}
+        title={noticeTitle}
+        onClose={() => setNoticeOpen(false)}
+        footer={<button type="button" className="primary-mini" onClick={() => setNoticeOpen(false)}>Close</button>}
+      >
+        <div style={{ whiteSpace: 'pre-line', color: 'var(--text-muted)' }}>{noticeBody}</div>
+      </Modal>
     </Shell>
   );
 }

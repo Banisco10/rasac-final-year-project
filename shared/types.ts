@@ -43,6 +43,8 @@ export interface User {
   passwordHash: string;
   roleId: number;
   department?: string | null;
+  officeLocation?: string | null;
+  consultationHours?: string | null;
   isActive: boolean;
   failedLogins: number;
   lockedUntil?: string | null;
@@ -162,6 +164,7 @@ export interface AccessContext {
   academicPeriodId?: number;
   targetStudentId?: number;
   targetCourseId?: number;
+  requestPath?: string;
 }
 
 export interface AccessRequest {
@@ -203,6 +206,8 @@ export interface AuthenticatedUser {
   role: RoleName;
   permissions: Array<{ resource: string; action: string }>;
   department?: string | null;
+  officeLocation?: string | null;
+  consultationHours?: string | null;
   studentId?: string | null;
   staffId?: string | null;
   lastLogin?: string | null;

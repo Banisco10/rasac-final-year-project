@@ -8,7 +8,9 @@ import { Modal } from '../../components/Modal';
 import type { View, NavItem } from '../../types';
 import type { AuditLog } from '../../types';
 import { api } from '../../api';
+import type { AdminStats } from '../../api';
 import type { PreviousLoginInfo } from '../../../../shared/types.js';
+
 
 type GradeQueueItem = {
   id: number;
@@ -110,7 +112,7 @@ export function DashboardHomeScreen({
   onNavigate: (view: View) => void;
   onLogout: () => void;
 }) {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [liveEvents, setLiveEvents] = useState<(AuditLog & { bucket: string })[]>([]);
   const [queue, setQueue] = useState<GradeQueueItem[]>([]);
   const [decisionItem, setDecisionItem] = useState<GradeQueueItem | null>(null);
@@ -120,6 +122,10 @@ export function DashboardHomeScreen({
   const [noticeBody, setNoticeBody] = useState('');
   const [welcomeBannerOpen, setWelcomeBannerOpen] = useState(Boolean(previousLogin?.lastLogin));
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [queueSearchQuery, setQueueSearchQuery] = useState('');
 
   const filteredEvents = liveEvents.filter((event) => {
     const text = searchQuery.toLowerCase();
@@ -133,7 +139,7 @@ export function DashboardHomeScreen({
   });
 
   const filteredQueue = queue.filter((item) => {
-    const text = searchQuery.toLowerCase();
+    const text = queueSearchQuery.toLowerCase();
     return (
       String(item.studentName || '').toLowerCase().includes(text) ||
       String(item.courseCode || '').toLowerCase().includes(text) ||
@@ -152,27 +158,34 @@ export function DashboardHomeScreen({
   };
 
   const loadDashboard = async () => {
-    const [statsResponse, eventsResponse, queueResponse] = await Promise.all([
-      api.adminStats(),
-      api.securityEvents(),
-      api.gradeApprovalQueue(),
-    ]);
+    try {
+      const [statsResponse, eventsResponse, queueResponse] = await Promise.all([
+        api.adminStats(),
+        api.securityEvents(),
+        api.gradeApprovalQueue(),
+      ]);
 
-    setStats(statsResponse);
-    const flat = [
-      ...eventsResponse.ROLE.map((e) => ({ ...e, bucket: 'ROLE' })),
-      ...eventsResponse.RELATIONSHIP.map((e) => ({ ...e, bucket: 'REL' })),
-      ...eventsResponse.CONTEXT.map((e) => ({ ...e, bucket: 'CONT' })),
-      ...eventsResponse.SOD.map((e) => ({ ...e, bucket: 'SOD' })),
-    ]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 5);
-    setLiveEvents(flat);
-    setQueue(queueResponse.data);
+      setStats(statsResponse);
+      const flat = [
+        ...eventsResponse.ROLE.map((e) => ({ ...e, bucket: 'ROLE' })),
+        ...eventsResponse.RELATIONSHIP.map((e) => ({ ...e, bucket: 'REL' })),
+        ...eventsResponse.CONTEXT.map((e) => ({ ...e, bucket: 'CONT' })),
+        ...eventsResponse.SOD.map((e) => ({ ...e, bucket: 'SOD' })),
+      ]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setLiveEvents(flat);
+      setQueue(queueResponse.data);
+      setLoadError(null);
+    } catch (error) {
+      console.error(error);
+      setLoadError(error instanceof Error ? error.message : 'Unable to reach the RASAC server.');
+    } finally {
+      setInitialLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadDashboard().catch(console.error);
+    loadDashboard()
   }, []);
 
   
@@ -202,18 +215,25 @@ export function DashboardHomeScreen({
     { view: 'dashboard',       label: 'Dashboard',      icon: <LayoutDashboard size={20} /> },
     { view: 'course-detail',   label: 'Courses',         icon: <BookOpen size={20} /> },
     { view: 'user-management', label: 'Users',           icon: <Users size={20} /> },
-    { view: 'role-management', label: 'Access Control',  icon: <Shield size={20} /> },
+    { view: 'access-control', label: 'Access Control',  icon: <Shield size={20} /> },
     { view: 'audit-logs',      label: 'Audit Logs',      icon: <FileText size={20} /> },
     { view: 'system-settings', label: 'System Settings', icon: <Settings size={20} /> },
   ];
 
+  const denialCounts = {
+    role: stats?.denialsToday.role || 0,
+    rel: stats?.denialsToday.relationship || 0,
+    cont: stats?.denialsToday.context || 0,
+    sod: stats?.denialsToday.sod || 0,
+  };
+  const denialTotal = denialCounts.role + denialCounts.rel + denialCounts.cont + denialCounts.sod;
+  const pct = (n: number) => (denialTotal > 0 ? `${(n / denialTotal) * 100}%` : '0%');
   const denialBars = [
-    { label: `ROLE (${stats?.denialsToday.role || 0})`,         width: '45%', tone: 'role' },
-    { label: `REL (${stats?.denialsToday.relationship || 0})`,  width: '25%', tone: 'rel' },
-    { label: `CONT (${stats?.denialsToday.context || 0})`,      width: '20%', tone: 'cont' },
-    { label: `SOD (${stats?.denialsToday.sod || 0})`,           width: '10%', tone: 'sod' },
+    { label: `ROLE (${denialCounts.role})`, width: pct(denialCounts.role), tone: 'role' },
+    { label: `REL (${denialCounts.rel})`,   width: pct(denialCounts.rel),  tone: 'rel' },
+    { label: `CONT (${denialCounts.cont})`, width: pct(denialCounts.cont), tone: 'cont' },
+    { label: `SOD (${denialCounts.sod})`,   width: pct(denialCounts.sod),  tone: 'sod' },
   ];
-
   const comparisonRows = [
     ['Decision Source', 'Static Role Membership',    'Dynamic Relationship + Context'],
     ['Hierarchy',       'Rigid Parent-Child',         'Fluid Graph-Based Relationships'],
@@ -247,8 +267,17 @@ export function DashboardHomeScreen({
           >
             <Bell size={20} />
           </button>
-          <button className="icon-chip" type="button" aria-label="Refresh" onClick={() => loadDashboard().catch(console.error)}>
-            <RefreshCcw size={20} />
+          <button
+            className="icon-chip"
+            type="button"
+            aria-label="Refresh"
+            disabled={refreshing}
+            onClick={() => {
+              setRefreshing(true);
+              loadDashboard().finally(() => setRefreshing(false));
+            }}
+          >
+            <RefreshCcw size={20} className={refreshing ? 'spin-icon' : ''} />
           </button>
           <button
             className="profile-chip"
@@ -262,6 +291,29 @@ export function DashboardHomeScreen({
       topbarClassName="dashboard-main"
     >
       <section className="page-stack dashboard-page">
+        <style>{`
+          @keyframes rasac-spin { to { transform: rotate(360deg); } }
+          .spin-icon { animation: rasac-spin 0.7s linear infinite; transform-origin: center; }
+        `}</style>
+        {loadError && (
+          <div className="lockout-alert" style={{ marginBottom: '16px', borderColor: 'var(--danger)' }}>
+            <CircleAlert size={20} className="lockout-icon" />
+            <div style={{ flex: 1 }}>
+              <p className="lockout-title">Couldn't load dashboard data</p>
+              <p className="lockout-desc">{loadError}</p>
+            </div>
+            <button
+              type="button"
+              className="primary-mini"
+              onClick={() => {
+                setRefreshing(true);
+                loadDashboard().finally(() => setRefreshing(false));
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
         {welcomeBannerOpen && previousLogin && (
           <div className="lockout-alert" style={{ marginBottom: '16px' }}>
             <Bell size={20} className="lockout-icon" />
@@ -297,10 +349,11 @@ export function DashboardHomeScreen({
             <div className="hero-accent" />
               <div className="hero-copy">
               <div className="eyebrow">CURRENT STATUS</div>
-              <h2>{stats?.activePeriod?.name?.toUpperCase() ?? 'NO ACTIVE PERIOD'}</h2>
+              <h2>{initialLoading ? 'LOADING...' : (stats?.activePeriod?.name?.toUpperCase() ?? 'NO ACTIVE PERIOD')}</h2>
               <button
                 className="status-pill open"
                 type="button"
+                disabled={initialLoading}
                 onClick={() => openNotice(
                   'Academic period',
                   stats?.activePeriod
@@ -308,15 +361,15 @@ export function DashboardHomeScreen({
                     : 'No active academic period is configured.'
                 )}
               >
-                {stats?.activePeriod ? 'OPEN' : 'CLOSED'}
+                {initialLoading ? '···' : (stats?.activePeriod ? 'OPEN' : 'CLOSED')}
               </button>
             </div>
             <div className="hero-period">
               <div className="eyebrow">PERIOD ENDS</div>
               <div className="countdown">
-                {stats?.activePeriod
+                {initialLoading ? '···' : (stats?.activePeriod
                   ? new Date(stats.activePeriod.endDate).toLocaleDateString()
-                  : '—'}
+                  : '—')}
               </div>
             </div>
             <button className="primary-mini" type="button" onClick={() => onNavigate('system-settings')}>
@@ -379,7 +432,11 @@ export function DashboardHomeScreen({
           <section className="events-card panel-card">
             <div className="panel-heading">
               <h3>REAL-TIME EVENTS</h3>
-              <span className="live-chip"><span />LIVE MONITOR</span>
+              {searchQuery.trim() ? (
+                <span className="live-chip">{filteredEvents.length} match{filteredEvents.length === 1 ? '' : 'es'}</span>
+              ) : (
+                <span className="live-chip"><span />LIVE MONITOR</span>
+              )}
             </div>
             <div className="events-list">
               {filteredEvents.length === 0 ? (
@@ -387,7 +444,7 @@ export function DashboardHomeScreen({
                   <div className="event-body">No denial events recorded.</div>
                 </div>
               ) : (
-                filteredEvents.map((log) => {
+                filteredEvents.slice(0, searchQuery.trim() ? 20 : 5).map((log) => {
                   const badges = [log.bucket, log.denyReason].filter(Boolean) as string[];
                   const body = (log.metadata?.message as string)
                     ?? `Resource: ${log.resource}`;
@@ -417,6 +474,22 @@ export function DashboardHomeScreen({
           <section className="queue-card panel-card">
             <div className="panel-heading">
               <h3>GRADE APPROVAL QUEUE</h3>
+              <input
+                type="text"
+                value={queueSearchQuery}
+                onChange={(e) => setQueueSearchQuery(e.target.value)}
+                placeholder="Search queue..."
+                style={{
+                  background: 'var(--field-bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  color: 'var(--text)',
+                  fontSize: '12px',
+                  fontFamily: 'var(--font-sans)',
+                  width: '140px',
+                }}
+              />
             </div>
             <div className="queue-head">
               <span>SUBJECT</span>

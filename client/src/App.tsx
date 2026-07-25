@@ -24,7 +24,7 @@ import { SystemSettingsScreen } from './pages/admin/SystemSettings';
 
 
 const ROLE_VIEWS: Record<string, View[]> = {
-  ADMINISTRATOR: ['dashboard', 'role-management', 'audit-logs', 'user-management', 'system-settings', 'course-detail'],
+  ADMINISTRATOR: ['dashboard', 'access-control', 'audit-logs', 'user-management', 'system-settings', 'course-detail'],
   LECTURER: ['lecturer-dashboard', 'lecturer-activity', 'lecturer-profile', 'lecturer-grading'],
   STUDENT: ['student-dashboard', 'student-courses', 'student-grades', 'student-activity', 'student-support'],
 };
@@ -35,13 +35,13 @@ function isAllowed(view: View, role: string | null): boolean {
   return ROLE_VIEWS[role]?.includes(view) ?? false;
 }
 
-function useHashView(canAccess: (v: View) => boolean): [View, (next: View) => void] {
+function useHashView(canAccess: (v: View) => boolean): [View, (next: View, params?: Record<string, string>) => void] {
   const parse = (): View => {
-    const raw = window.location.hash.replace('#', '');
+    const raw = window.location.hash.replace('#', '').split('?')[0];
     const known: View[] = [
       'dashboard', 'lecturer-dashboard', 'lecturer-activity', 'lecturer-profile',
       'lecturer-grading', 'student-dashboard', 'student-courses', 'student-grades',
-      'student-activity', 'student-support', 'course-detail', 'role-management',
+      'student-activity', 'student-support', 'course-detail', 'access-control',
       'audit-logs', 'user-management', 'system-settings', 'login',
     ];
     return (known as string[]).includes(raw) ? (raw as View) : 'login';
@@ -50,7 +50,6 @@ function useHashView(canAccess: (v: View) => boolean): [View, (next: View) => vo
   const [view, setView] = useState<View>(parse);
   const viewRef = useRef(view);
   viewRef.current = view;
-
 
     useEffect(() => {
     const onHashChange = () => {
@@ -66,9 +65,10 @@ function useHashView(canAccess: (v: View) => boolean): [View, (next: View) => vo
     return () => window.removeEventListener('hashchange', onHashChange);
   }, [canAccess]);
 
-  const go = (next: View) => {
+  const go = (next: View, params?: Record<string, string>) => {
     if (!canAccess(next)) return;
-    window.location.hash = next;
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    window.location.hash = next + query;
     setView(next);
   };
 
@@ -112,8 +112,6 @@ function App() {
     if (view !== 'login' && !isAllowed(view, role)) {
       window.location.hash = signedIn ? '' : 'login';
       if (!signedIn) go('login');
-      // if signedIn but wrong role for this view and no prior valid view exists,
-      // fall back to their own dashboard rather than an empty hash
       else {
         const fallback = role === 'ADMINISTRATOR' ? 'dashboard'
           : role === 'LECTURER' ? 'lecturer-dashboard' : 'student-dashboard';
@@ -186,7 +184,7 @@ function App() {
     return <StudentSupportScreen signedIn={signedIn} activeView={view} onNavigate={go} onLogout={() => { setSignedIn(false); go('login'); }} />;
   }
 
-  if (view === 'role-management') {
+  if (view === 'access-control') {
     return <AccessControlScreen signedIn={signedIn} onNavigate={go} onLogout={handleLogout} />;
   }
 

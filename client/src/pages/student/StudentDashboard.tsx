@@ -22,11 +22,24 @@ import {
 import { Shell } from '../../components/Shell';
 import { Modal } from '../../components/Modal';
 import type { View, NavItem, Grade, Enrollment, AuthenticatedUser, AuditLog } from '../../types';
-import { api } from '../../api';
+import { api, getAccessToken } from '../../api';
 import { studentSidebarItems } from './studentPortal';
 import { DecisionFlowAnimator } from '../../components/DecisionFlowAnimator';
 import type { DecisionStep } from '../../components/DecisionFlowAnimator';
 import type { PreviousLoginInfo } from '../../../../shared/types.js';
+
+
+function decodeJwtExp(token: string | null): number | null {
+  if (!token) return null;
+  try {
+    const [, payload] = token.split('.');
+    if (!payload) return null;
+    const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof json.exp === 'number' ? json.exp : null; // exp is seconds since epoch
+  } catch {
+    return null; // not a JWT, or malformed — fail silently, don't crash the dashboard
+  }
+}
 
 type Transcript = {
   studentId: number;
@@ -109,18 +122,33 @@ export function StudentDashboardScreen({
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeBody, setNoticeBody] = useState('');
+  const [ttlSeconds, setTtlSeconds] = useState<number | null>(null);
+  const [reauthPending, setReauthPending] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadData = () => {
-    api.me().then(setMe).catch(console.error);
-    api.myGrades().then(setGrades).catch(console.error);
-    api.myEnrollments().then(setEnrollments).catch(console.error);
-    api.auditMy().then(setActivity).catch(console.error);
-    api.transcript().then((data) => setTranscript(data as unknown as Transcript)).catch(console.error);
-  };
+  setRefreshing(true);
+  Promise.allSettled([
+    api.me().then(setMe),
+    api.myGrades().then(setGrades),
+    api.myEnrollments().then(setEnrollments),
+    api.auditMy().then(setActivity),
+    api.transcript().then((data) => setTranscript(data as unknown as Transcript)),
+  ]).finally(() => setRefreshing(false));
+};
 
   useEffect(() => {
     loadData();
   }, []);
+
+
+  useEffect(() => {
+  const interval = setInterval(() => {
+    const expSeconds = decodeJwtExp(getAccessToken());
+    setTtlSeconds(expSeconds === null ? null : Math.max(0, expSeconds - Math.floor(Date.now() / 1000)));
+  }, 1000);
+  return () => clearInterval(interval);
+}, []);
 
   const openNotice = (title: string, body: string) => {
     setNoticeTitle(title);
@@ -128,8 +156,35 @@ export function StudentDashboardScreen({
     setNoticeOpen(true);
   };
 
+  const handleReauth = async () => {
+  if (reauthPending) return;
+  setReauthPending(true);
+  try {
+    await api.refresh();
+    openNotice('Session Refreshed', 'Your session has been successfully renewed. You\'re all set to continue.');
+  } catch {
+    openNotice('Refresh Failed', 'We couldn\'t renew your session right now. If this keeps happening, please log out and sign back in.');
+  } finally {
+    setReauthPending(false);
+    api.auditMy().then(setActivity).catch(console.error); // refresh events likely show up in the audit trail too
+  }
+};
+
+  const downloadTranscript = () => {
+  if (!transcript) return;
+  const blob = new Blob([JSON.stringify(transcript, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `transcript-${me?.studentId ?? 'student'}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+};
+
+  const MAX_GPA = 4.0;
+
   const summaryMetrics = useMemo(() => [
-    { label: 'CUMULATIVE GPA', value: transcript ? transcript.gpa.toFixed(2) : '3.88', bar: transcript ? Math.min(100, Math.round(transcript.gpa * 20)) : 82 },
+    { label: 'CUMULATIVE GPA', value: transcript ? transcript.gpa.toFixed(2) : '3.88', bar: transcript ? Math.min(100, Math.round((transcript.gpa / MAX_GPA) * 100)) : 82 },
     { label: 'TOTAL CREDITS', value: `${transcript?.totalCredits ?? enrollments.length * 3}`, meta: '/ 120', bar: 81 },
     { label: 'ENROLLED COURSES', value: `${String(enrollments.length).padStart(2, '0')}`, bar: 100, segmented: true },
   ], [enrollments.length, transcript]);
@@ -137,14 +192,16 @@ export function StudentDashboardScreen({
   const transcriptGrades: Array<Grade & { course: Transcript['grades'][number]['course'] }> = transcript
     ? transcript.grades
     : grades.map((grade) => ({ ...grade, course: null }));
-  const gradeRows = transcriptGrades.slice(0, 4).map((grade) => ({
+
+  
+  const gradeRowsAll = transcriptGrades.map((grade) => ({
     courseId: `#${grade.courseId}`,
     subject: grade.course?.title ?? grade.grade,
     status: grade.status,
     value: grade.grade,
   }));
 
-  const filteredGradeRows = gradeRows.filter((row) => {
+  const filteredGradeRows = gradeRowsAll.filter((row) => {
     const text = searchQuery.toLowerCase();
     return (
       String(row.courseId || '').toLowerCase().includes(text) ||
@@ -152,9 +209,11 @@ export function StudentDashboardScreen({
       String(row.status || '').toLowerCase().includes(text) ||
       String(row.value || '').toLowerCase().includes(text)
     );
-  });
+  })
+  .slice(0, searchQuery ? undefined : 4);
+  
 
-  const activityRows = activity.slice(0, 3).map((item) => ({
+  const activityRowsAll = activity.map((item) => ({
     title: item.outcome,
     body: item.action,
     tag: item.ipAddress ? `IP: ${item.ipAddress}` : '',
@@ -163,7 +222,7 @@ export function StudentDashboardScreen({
     tone: item.outcome === 'GRANTED' ? 'success' : 'danger',
   }));
 
-  const filteredActivityRows = activityRows.filter((row) => {
+  const filteredActivityRows = activityRowsAll.filter((row) => {
     const text = searchQuery.toLowerCase();
     return (
       String(row.title || '').toLowerCase().includes(text) ||
@@ -171,13 +230,25 @@ export function StudentDashboardScreen({
       String(row.tag || '').toLowerCase().includes(text) ||
       String(row.badge || '').toLowerCase().includes(text)
     );
-  });
+  })
+  .slice(0, searchQuery ? undefined : 3);
+
+
+  const formatTtl = (s: number | null) => {
+  if (s === null) return 'N/A';
+  const h = String(Math.floor(s / 3600)).padStart(2, '0');
+  const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+  const sec = String(s % 60).padStart(2, '0');
+  return `${h}:${m}:${sec}`;
+};
+
 
   const statusItems = [
-    { label: 'Clearance Level', value: 'TIER-3' },
-    { label: 'MFA Status', value: 'ACTIVE', tone: 'success' },
-    { label: 'Session TTL', value: '14:02:59' },
-  ];
+  { label: 'Permissions Granted', value: `${me?.permissions?.length ?? 0}` },
+  { label: 'Access Role', value: me?.role ?? 'STUDENT' },
+  { label: 'Session TTL', value: formatTtl(ttlSeconds), tone: ttlSeconds !== null && ttlSeconds < 60 ? 'danger' : undefined },
+];
+  
   const flowStatusLabel = testRunning
     ? 'ENGINE INITIALIZING / DECISION TRACE ACTIVE'
     : pendingDecisionResult
@@ -234,11 +305,13 @@ export function StudentDashboardScreen({
       const status = error.status ?? 0;
       const denyLayer =
         status === 403
-          ? testScenario === 'other-grade'
-            ? 'RELATIONSHIP'
-            : 'ROLE'
+          ? testScenario === 'own-grade'
+            ? 'ROLE'
+            : 'RELATIONSHIP'
           : status === 401
             ? 'ROLE'
+            : status === 404
+            ? 'RELATIONSHIP'
             : 'CONTEXT';
 
       return {
@@ -289,7 +362,9 @@ export function StudentDashboardScreen({
       topIcons={
         <>
           <button className="icon-chip" aria-label="Notifications" onClick={() => openNotice('Notifications', `Enrolled in ${enrollments.length} courses.`)}><Bell size={20} /></button>
-          <button className="icon-chip" aria-label="Refresh" onClick={loadData}><RefreshCcw size={20} /></button>
+          <button className="icon-chip" aria-label="Refresh" onClick={loadData} disabled={refreshing}>
+            <RefreshCcw size={20} className={refreshing ? 'spinning' : ''} />
+          </button>
           <button className="icon-chip" aria-label="Console" onClick={() => openNotice('Console Status', `Security constraints verified. GPA: ${transcript ? transcript.gpa.toFixed(2) : 'N/A'}`)}><Monitor size={20} /></button>
           <button className="icon-chip" aria-label="Settings" onClick={() => openNotice('Settings', `Department: ${me?.department ?? 'Computer Science'}`)}><Settings size={20} /></button>
           <div className="student-user-chip" aria-label="Student profile">
@@ -376,7 +451,8 @@ export function StudentDashboardScreen({
 
           <aside className="panel-card student-context-card">
             <div className="panel-heading student-context-heading">
-              <div className="live-chip security-chip"><Shield size={14} /><span>SECURITY CONTEXT</span></div>
+              <div className="security-chip"><Shield size={14} /><span>SECURITY CONTEXT</span></div>
+              <div className="live-chip"><span />LIVE</div>
             </div>
             <div className="student-context-panel">
               {statusItems.map((item) => (
@@ -386,9 +462,21 @@ export function StudentDashboardScreen({
                 </div>
               ))}
             </div>
-            <button className="student-context-action" type="button">
-              RE-AUTHENTICATE SECURE CHANNEL
+            <button
+              className="student-context-action"
+              type="button"
+              onClick={handleReauth}
+              disabled={reauthPending}
+            >
+              {reauthPending ? (
+                <><Loader2 size={14} className="spinning" /> Refreshing...</>
+              ) : (
+                'REFRESH MY SESSION'
+              )}
             </button>
+            <p style={{ color: 'var(--muted)', fontSize: '12px', margin: '6px 0 0', textAlign: 'center' }}>
+              Renews your login so you're not signed out unexpectedly.
+            </p>
           </aside>
         </div>
 
@@ -402,16 +490,7 @@ export function StudentDashboardScreen({
               <button
                 className="inline-link student-transcript-link"
                 type="button"
-                onClick={() => {
-                  if (!transcript) return;
-                  const blob = new Blob([JSON.stringify(transcript, null, 2)], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const anchor = document.createElement('a');
-                  anchor.href = url;
-                  anchor.download = `transcript-${me?.studentId ?? 'student'}.json`;
-                  anchor.click();
-                  URL.revokeObjectURL(url);
-                }}
+                onClick={() => onNavigate('student-grades')}
               >
                 FULL TRANSCRIPT
               </button>
@@ -468,16 +547,7 @@ export function StudentDashboardScreen({
             <button
               className="student-export"
               type="button"
-              onClick={() => {
-                if (!transcript) return;
-                const blob = new Blob([JSON.stringify(transcript, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const anchor = document.createElement('a');
-                anchor.href = url;
-                anchor.download = `transcript-${me?.studentId ?? 'student'}.json`;
-                anchor.click();
-                URL.revokeObjectURL(url);
-              }}
+              onClick={downloadTranscript}
             >
               <DownloadCloud size={14} />
               EXPORT TRANSCRIPT_JSON
@@ -654,7 +724,6 @@ export function StudentDashboardScreen({
       <Modal
         open={noticeOpen}
         title={noticeTitle}
-        description={noticeBody}
         onClose={() => setNoticeOpen(false)}
         footer={<button type="button" className="primary-mini" onClick={() => setNoticeOpen(false)}>Close</button>}
       >

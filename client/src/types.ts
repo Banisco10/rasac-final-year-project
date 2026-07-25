@@ -15,7 +15,7 @@ export type View =
   | 'student-activity'
   | 'student-support'
   | 'course-detail'
-  | 'role-management'
+  | 'access-control'
   | 'audit-logs'
   | 'user-management'
   | 'system-settings';
