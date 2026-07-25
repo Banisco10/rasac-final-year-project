@@ -201,7 +201,7 @@ export function LoginScreen({ onEnter }: { onEnter: (role: string, previousLogin
             you to the correct portal automatically.
           </p>
 
-          {/* Status Messages */}
+         
           {failedAttempts >= 2 && (
             <div className="lockout-alert" id="lockout-alert">
               <Shield size={20} className="lockout-icon" />

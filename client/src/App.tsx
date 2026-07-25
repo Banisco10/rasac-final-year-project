@@ -4,7 +4,7 @@ import type { View } from './types';
 import type { PreviousLoginInfo } from '../../shared/types';
 
 
-// Page imports
+
 import { LoginScreen } from './pages/Login';
 import { DashboardHomeScreen } from './pages/admin/DashboardHome';
 import { LecturerDashboardScreen } from './pages/lecturer/LecturerDashboard';
@@ -81,6 +81,7 @@ function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [signedIn, setSignedIn] = useState(hasStoredToken());
   const [previousLogin, setPreviousLogin] = useState<PreviousLoginInfo | null>(null);
+  const [pendingRoleNav, setPendingRoleNav] = useState(false);
 
   const [view, go] = useHashView((v) => isAllowed(v, role));
 
@@ -129,16 +130,21 @@ function App() {
   };
 
 
-  const handleLoginSuccess = (userRole: string, prevLogin?: PreviousLoginInfo | null) => {
-    setSignedIn(true);
-    setRole(userRole);
-    setPreviousLogin(prevLogin ?? null);
-    setTimeout(() => {
-      if (userRole === 'ADMINISTRATOR') go('dashboard');
-      else if (userRole === 'LECTURER') go('lecturer-dashboard');
-      else go('student-dashboard');
-    }, 50);
-  };
+    const handleLoginSuccess = (userRole: string, prevLogin?: PreviousLoginInfo | null) => {
+      setSignedIn(true);
+      setRole(userRole);
+      setPreviousLogin(prevLogin ?? null);
+      setPendingRoleNav(true);
+    };
+
+    useEffect(() => {
+      if (!pendingRoleNav) return;
+      setPendingRoleNav(false);
+      const fallback = role === 'ADMINISTRATOR' ? 'dashboard'
+        : role === 'LECTURER' ? 'lecturer-dashboard'
+        : 'student-dashboard';
+      go(fallback as View);
+    }, [pendingRoleNav, role]);
 
   if (view === 'login') {
     return <LoginScreen onEnter={handleLoginSuccess} />;
